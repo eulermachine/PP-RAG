@@ -1,0 +1,171 @@
+{
+  "timestamp": "2025-12-26T16:35:27.993258",
+  "config": {
+    "dataset": {
+      "num_vectors": 100000,
+      "dimension": 768,
+      "output_path": "./data/vectors_100k_768d.npy",
+      "sample_size": 1000
+    },
+    "encryption": {
+      "scheme": "CKKS",
+      "params_path": "./config/ckks_128bit.json",
+      "simulation_mode": true
+    },
+    "index": {
+      "num_clusters": 100,
+      "kmeans_iterations": 10,
+      "softmin_temperature": 1.0,
+      "hnsw_m": 16,
+      "hnsw_ef_construction": 200,
+      "hnsw_ef_search": 100
+    },
+    "benchmark": {
+      "use_sample": true,
+      "num_test_queries": 50,
+      "retrieval_top_k": [
+        1,
+        5,
+        10
+      ],
+      "update_batch_sizes": [
+        1,
+        10,
+        100
+      ],
+      "num_workers": 4,
+      "batch_processing": true
+    }
+  },
+  "setup": [
+    {
+      "component": "encryption",
+      "operation": "encrypt_upload",
+      "total_time": 0.20953529999999998,
+      "num_items": 1000,
+      "avg_time_per_item": 0.00020953529999999997,
+      "details": {}
+    },
+    {
+      "component": "secure_kmeans",
+      "operation": "clustering",
+      "total_time": 7.6216493,
+      "num_items": 1000,
+      "avg_time_per_item": 0.0076216493,
+      "details": {
+        "init": 0.00037730000000002484,
+        "assignment": 7.276018099999998,
+        "update": 0.01903400000000066,
+        "normalize": 0.13347359999999964
+      }
+    },
+    {
+      "component": "secure_hnsw",
+      "operation": "build_index",
+      "total_time": 0.19547760000000025,
+      "num_items": 1000,
+      "avg_time_per_item": 0.00019547760000000026,
+      "details": {
+        "layer_assign": 0.005533299999999741,
+        "neighbor_search": 0.16877430000000082,
+        "edge_creation": 0.021155399999999602
+      }
+    }
+  ],
+  "retrieve": [
+    {
+      "component": "encryption",
+      "operation": "encrypt_query",
+      "total_time": 0.011752700000000615,
+      "num_items": 50,
+      "avg_time_per_item": 0.0002350540000000123,
+      "details": {}
+    },
+    {
+      "component": "secure_hnsw",
+      "operation": "search_top1",
+      "total_time": 2.6126935000000007,
+      "num_items": 50,
+      "avg_time_per_item": 0.052253870000000015,
+      "details": {
+        "distance_compute": 0.09813929999999971,
+        "softmin_select": 2.5035235,
+        "traversal": 0.011009600000001285
+      }
+    },
+    {
+      "component": "secure_hnsw",
+      "operation": "search_top5",
+      "total_time": 2.8274652000000007,
+      "num_items": 50,
+      "avg_time_per_item": 0.056549304000000016,
+      "details": {
+        "distance_compute": 0.31619249999999965,
+        "softmin_select": 2.502096700000001,
+        "traversal": 0.009147299999998637
+      }
+    },
+    {
+      "component": "secure_hnsw",
+      "operation": "search_top10",
+      "total_time": 2.828073700000001,
+      "num_items": 50,
+      "avg_time_per_item": 0.05656147400000002,
+      "details": {
+        "distance_compute": 0.3101109000000015,
+        "softmin_select": 2.512107300000002,
+        "traversal": 0.00583650000000091
+      }
+    }
+  ],
+  "update": [
+    {
+      "component": "secure_hnsw",
+      "operation": "insert_batch1",
+      "total_time": 0.02418970000000087,
+      "num_items": 1,
+      "avg_time_per_item": 0.02418970000000087,
+      "details": {}
+    },
+    {
+      "component": "secure_hnsw",
+      "operation": "delete_batch1",
+      "total_time": 0.015116100000000188,
+      "num_items": 1,
+      "avg_time_per_item": 0.015116100000000188,
+      "details": {}
+    },
+    {
+      "component": "secure_hnsw",
+      "operation": "insert_batch10",
+      "total_time": 0.16938920000000124,
+      "num_items": 10,
+      "avg_time_per_item": 0.016938920000000125,
+      "details": {}
+    },
+    {
+      "component": "secure_hnsw",
+      "operation": "delete_batch10",
+      "total_time": 0.15604740000000206,
+      "num_items": 10,
+      "avg_time_per_item": 0.015604740000000205,
+      "details": {}
+    },
+    {
+      "component": "secure_hnsw",
+      "operation": "insert_batch100",
+      "total_time": 1.5799757999999997,
+      "num_items": 100,
+      "avg_time_per_item": 0.015799757999999997,
+      "details": {}
+    },
+    {
+      "component": "secure_hnsw",
+      "operation": "delete_batch100",
+      "total_time": 1.5507747999999992,
+      "num_items": 100,
+      "avg_time_per_item": 0.015507747999999993,
+      "details": {}
+    }
+  ]
+}

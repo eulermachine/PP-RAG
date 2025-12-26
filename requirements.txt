@@ -1,0 +1,14 @@
+# PP-RAG HE Benchmark Dependencies
+
+# Core
+numpy>=1.21.0
+pyyaml>=6.0
+
+# Visualization
+matplotlib>=3.5.0
+
+# Optional: for progress bars
+tqdm>=4.64.0
+
+# Optional: for plaintext HNSW baseline comparison
+# hnswlib>=0.7.0

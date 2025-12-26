@@ -1,0 +1,51 @@
+# PP-RAG HE Component Benchmark Configuration
+
+dataset:
+  dimension: 768
+  # 多级数据规模测试配置
+  scales:
+    - name: "100k"
+      num_vectors: 100000
+      output_path: "./data/vectors_100k_768d.npy"
+    - name: "1m"
+      num_vectors: 1000000
+      output_path: "./data/vectors_1m_768d.npy"
+    - name: "10m"
+      num_vectors: 10000000
+      output_path: "./data/vectors_10m_768d.npy"
+  # 向后兼容：单一配置（默认100k）
+  num_vectors: 100000
+  output_path: "./data/vectors_100k_768d.npy"
+  # 小样本验证模式
+  sample_size: 1000  # 用于快速验证的样本量
+
+encryption:
+  scheme: "CKKS"
+  # CKKS Params (Standard 128-bit security)
+  poly_modulus_degree: 8192
+  scale_power: 40  # 2^40
+
+index:
+  # 安全 HNSW 参数
+  hnsw_m: 16
+  hnsw_ef_construction: 200
+  hnsw_ef_search: 100
+  # PolySoftmin 参数
+  softmin_degree: 4
+  softmin_temperature: 1.0
+
+benchmark:
+  # 使用样本模式加速测试
+  use_sample: true
+  sample_sizes_per_scale:
+    "100k": 1000
+    "1m": 10000
+    "10m": 100000
+  # 检索测试
+  num_test_queries: 10  # Reduced for HE speed
+  retrieval_top_k: [1, 5, 10]
+  # 更新测试
+  update_batch_sizes: [1, 10]
+  # 并行配置
+  num_workers: 4
+  batch_processing: true

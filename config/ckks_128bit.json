@@ -1,0 +1,8 @@
+{
+  "scheme": "CKKS",
+  "security_level": 128,
+  "poly_modulus_degree": 8192,
+  "coeff_modulus_bits": [60, 40, 40, 60],
+  "scale": 1099511627776,
+  "comment": "2^40 scale for 128-bit security with poly_modulus_degree=8192"
+}
