@@ -11,49 +11,55 @@
 
 ## 🚀 快速开始
 
-### 1. 环境准备
+以下为两种可选的启动方式：推荐使用脚本化的 `bootstrap` 流程，用户无需 sudo 即可在本地构建并直接运行项目。
 
-- **Python**: 3.8+
-- **C++**: Visual Studio 2019+ (Windows) 或 GCC/Clang (Linux)
-- **CMake**: 3.14+
-- **SEAL**: [Microsoft SEAL 4.1+](https://github.com/microsoft/SEAL) (必须预先安装)
+### 推荐（单步引导，本地构建 SEAL，无需 sudo）
 
-### 2. 编译 C++ 核心模块
+脚本会在仓库内构建 Microsoft SEAL（到 `thirdparty/seal_install`），编译 `pprag_core`，并将生成的扩展复制到仓库根，方便直接 `python3 scripts/05_run_all.py` 运行。
 
-本项目依赖 C++ 编写的 `pprag_core` 模块。
+```bash
+# 克隆仓库后（只需执行一次）
+git clone https://github.com/eulermachine/PP-RAG.git
+cd PP-RAG
 
-**Windows:**
-直接运行构建脚本：
-```powershell
-.\build.bat
+# 一键引导（会花一些时间，下载并构建 SEAL）
+scripts/bootstrap.sh
+
+# 运行基准（bootstrap 会把扩展复制到仓库根，因此无需额外环境变量）
+python3 scripts/05_run_all.py
+
+# 或者若你希望使用构建目录下的扩展：
+PYTHONPATH=build python3 scripts/05_run_all.py
 ```
 
-**Linux/Manual:**
+### 备选（手动 / 系统范围安装 SEAL）
+
+如果你希望把 SEAL 安装到系统路径并对所有用户可用，可以先安装 SEAL（需要管理员权限）：
+
 ```bash
+# 在 SEAL 源码目录执行（或使用系统包管理器）
+cmake -S . -B build && sudo cmake --build build --target install
+
+# 然后在项目中构建 pprag_core：
 mkdir build && cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release
 cmake --build . --config Release
-cp pprag_core*.so ..  # 或 pyd
 ```
 
-### 3. 安装 Python 依赖
+随后你可以使用 `PYTHONPATH=build` 或把生成的 `.so/.pyd` 安装到系统 Python，使 `import pprag_core` 在任意位置可用。
+
+### 依赖与建议
+
+- `Python 3.8+`, `CMake 3.14+`, C++ 编译器（GCC/Clang 或 MSVC）。
+- 推荐先运行 `scripts/bootstrap.sh` 来避免手动配置 SEAL 路径或使用 sudo。
+
+### 生成与运行示例
+
+生成 100k 数据集并运行（bootstrap 会自动生成数据，如缺失）：
 
 ```bash
-pip install -r requirements.txt
-```
-
-### 4. 运行基准测试
-
-**生成数据:**
-```bash
-# 生成 100k 数据集 (约 600MB)
-python scripts/01_generate_data.py --scales 100k
-```
-
-**运行测试:**
-```bash
-# 运行 100k 规模测试
-python scripts/07_run_multiscale.py --scales 100k --visualize
+PYTHONPATH=build python3 scripts/01_generate_data.py --scales 100k
+PYTHONPATH=build python3 scripts/05_run_all.py
 ```
 
 ## 📊 测试结果
