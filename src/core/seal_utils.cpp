@@ -276,3 +276,12 @@ private:
 };
 
 } // namespace pprag
+
+// Convenience wrapper for secure_hnsw usage
+#ifdef USE_SEAL
+namespace pprag {
+    Ciphertext he_squared_distance(const Ciphertext& a, const Ciphertext& b, CKKSContext& ctx) {
+        return ctx.he_l2_distance_squared(a, b);
+    }
+}
+#endif
