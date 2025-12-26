@@ -10,13 +10,9 @@ from .data_generator import (
     save_dataset,
     get_sample_dataset
 )
-from .he_simulator import (
-    HESimulator,
-    PolySoftminSimulator,
-    HomoNormSimulator,
-    SecureKMeansSimulator,
-    SecureHNSWSimulator,
-    get_simulators
+from .ckks_wrapper import (
+    HEContext,
+    SecureHNSWWrapper
 )
 from .bench_runner import BenchmarkRunner, run_benchmark
 from .visualizer import generate_all_figures
@@ -30,13 +26,9 @@ __all__ = [
     'load_dataset',
     'save_dataset',
     'get_sample_dataset',
-    # HE Simulators
-    'HESimulator',
-    'PolySoftminSimulator',
-    'HomoNormSimulator',
-    'SecureKMeansSimulator',
-    'SecureHNSWSimulator',
-    'get_simulators',
+    # CKKS Wrapper
+    'HEContext',
+    'SecureHNSWWrapper',
     # Benchmark
     'BenchmarkRunner',
     'run_benchmark',

@@ -10,5 +10,5 @@ matplotlib>=3.5.0
 # Optional: for progress bars
 tqdm>=4.64.0
 
-# Optional: for plaintext HNSW baseline comparison
-# hnswlib>=0.7.0
+# Note: Microsoft SEAL and C++ compiler (Visual Studio 2019+) are required 
+# for building the core module. See README.md for build instructions.
