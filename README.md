@@ -4,7 +4,7 @@
 
 ## 📋 功能特性
 
-- **真实 CKKS 加密**: 使用 C++ Microsoft SEAL 库进行全同态计算。
+- ** CKKS 加密**: 使用 C++ Microsoft SEAL 库进行全同态计算。
 - **PolySoftmin**: 在同态加密域下使用多项式近似实现 Softmin 函数。
 - **Secure HNSW**: 图索引的全密文构建与搜索（向量与距离计算均在密文域）。
 - **多级规模测试**: 支持 10万、100万、1000万 级别向量数据的基准测试。
@@ -69,7 +69,7 @@ PYTHONPATH=build python3 scripts/05_run_all.py
 - `figures/*.png`: 自动生成的可视化图表（包括Setup时间、检索延迟等）
 
 > ⚠️ **性能提示**: 
-> 真实同态加密运算非常耗时。
+> 同态加密运算非常耗时。
 > - 加密 100k 向量可能需要数分钟。
 > - 单次 HNSW 搜索可能需要秒级时间（取决于参数）。
 > - 建议先使用 `scripts/07_run_multiscale.py` 中的 `sample_size` 参数进行小规模验证。
