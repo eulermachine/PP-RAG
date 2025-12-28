@@ -121,18 +121,175 @@ print(f"Running full benchmark for $SCALE with config {tmpf.name}")
 run_benchmark(tmpf.name)
 print(f"Finished full run for $SCALE")
 PY
+  #!/usr/bin/env bash
+  set -euo pipefail
+
+  # Bootstrap script to allow users to clone and run the project without sudo.
+  # - Builds Microsoft SEAL locally into thirdparty/seal_install (unless found)
+  # - Configures and builds the project with that SEAL (unless built)
+  # - Copies the built pprag_core Python extension to the repo root for easy import
+  # - Optionally generates the 100k dataset and runs a quick verification
+
+  ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+  cd "$ROOT_DIR"
+
+  FORCE=false
+  SKIP_SEAL=false
+  SKIP_BUILD=false
+  SKIP_DATA=false
+  SKIP_QUICK=false
+
+  usage() {
+    cat <<EOF
+  Usage: $0 [--force] [--skip-seal] [--skip-build] [--skip-data] [--skip-quick]
+
+    --force       Rebuild SEAL and project even if artifacts exist
+    --skip-seal   Do not build SEAL (use system SEAL or SEAL_DIR)
+    --skip-build  Skip building the project
+    --skip-data   Do not generate dataset
+    --skip-quick  Do not run the quick verification run
+  EOF
+    exit 1
+  }
+
+  while [ "$#" -gt 0 ]; do
+    case "$1" in
+      --force) FORCE=true; shift ;;
+      --skip-seal) SKIP_SEAL=true; shift ;;
+      --skip-build) SKIP_BUILD=true; shift ;;
+      --skip-data) SKIP_DATA=true; shift ;;
+      --skip-quick) SKIP_QUICK=true; shift ;;
+      -h|--help) usage ;;
+      *) echo "Unknown arg: $1"; usage ;;
+    esac
   done
-  echo "\nAll requested full-scale runs complete."
-fi
 
-# 5) Run benchmark (optional). Uncomment to run automatically.
-# echo "Running benchmark..."
-# PYTHONPATH=build python3 scripts/05_run_all.py
+  info() { echo "[INFO] $*"; }
+  warn() { echo "[WARN] $*"; }
+  err() { echo "[ERROR] $*" >&2; }
 
-cat <<EOF
-Bootstrap complete.
-To run the benchmark now:
-  PYTHONPATH=build python3 scripts/05_run_all.py
-Or run without PYTHONPATH because bootstrap copied the extension:
-  python3 scripts/05_run_all.py
-EOF
+  NPROC="$(nproc 2>/dev/null || echo 1)"
+  info "Root: $ROOT_DIR" "CPUs: $NPROC"
+
+  # Decide SEAL install dir (local by default)
+  SEAL_DIR_ENV="${SEAL_DIR:-}"
+  LOCAL_SEAL_DIR="$ROOT_DIR/thirdparty/seal_install"
+  SEAL_CMAKE_DIR=""
+
+  if [ -n "$SEAL_DIR_ENV" ]; then
+    info "Using SEAL_DIR from environment: $SEAL_DIR_ENV"
+    SEAL_CMAKE_DIR="$SEAL_DIR_ENV/lib/cmake/SEAL-4.1"
+  fi
+
+  if [ -z "$SEAL_CMAKE_DIR" ] && [ -d "$LOCAL_SEAL_DIR/lib/cmake/SEAL-4.1" ]; then
+    info "Found existing local SEAL install at $LOCAL_SEAL_DIR"
+    SEAL_CMAKE_DIR="$LOCAL_SEAL_DIR/lib/cmake/SEAL-4.1"
+  fi
+
+  if [ -z "$SEAL_CMAKE_DIR" ] && [ -d "/usr/local/lib/cmake/SEAL-4.1" ]; then
+    info "Found system SEAL at /usr/local"
+    SEAL_CMAKE_DIR="/usr/local/lib/cmake/SEAL-4.1"
+  fi
+
+  # 1) Build SEAL locally (no sudo) unless instructed to skip or already present
+  if [ "$SKIP_SEAL" = true ]; then
+    info "Skipping SEAL build by request (--skip-seal)"
+  else
+    if [ -n "$SEAL_CMAKE_DIR" ] && [ "$FORCE" = false ]; then
+      info "SEAL already available at: $SEAL_CMAKE_DIR (skipping build)"
+    else
+      info "Building Microsoft SEAL locally into: $LOCAL_SEAL_DIR"
+      if [ ! -d "$ROOT_DIR/SEAL" ]; then
+        info "Cloning SEAL source..."
+        git clone --depth 1 https://github.com/microsoft/SEAL.git SEAL
+      else
+        info "SEAL source exists; using $ROOT_DIR/SEAL"
+      fi
+
+      pushd SEAL >/dev/null
+      mkdir -p build && cd build
+      cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$LOCAL_SEAL_DIR" ..
+      info "Compiling and installing SEAL (this may take several minutes)..."
+      cmake --build . --target install -j"$NPROC"
+      popd >/dev/null
+
+      if [ -d "$LOCAL_SEAL_DIR/lib/cmake/SEAL-4.1" ]; then
+        info "SEAL installed to $LOCAL_SEAL_DIR"
+        SEAL_CMAKE_DIR="$LOCAL_SEAL_DIR/lib/cmake/SEAL-4.1"
+      else
+        err "SEAL build finished but install directory not found: $LOCAL_SEAL_DIR/lib/cmake/SEAL-4.1"
+        exit 1
+      fi
+    fi
+  fi
+
+  # 2) Configure and build this project using detected SEAL
+  if [ "$SKIP_BUILD" = true ]; then
+    info "Skipping project build (--skip-build)"
+  else
+    # If pprag_core already built and not forced, skip build
+    EXIST_SO="$(ls build/pprag_core*.so 2>/dev/null || true)"
+    if [ -n "$EXIST_SO" ] && [ "$FORCE" = false ]; then
+      info "Found existing pprag_core build artifacts; skipping build"
+    else
+      info "Configuring project with SEAL CMake dir: ${SEAL_CMAKE_DIR:-<not-set>}"
+      mkdir -p build
+      if [ -n "$SEAL_CMAKE_DIR" ]; then
+        cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DSEAL_DIR="$SEAL_CMAKE_DIR"
+      else
+        warn "SEAL CMake dir not set; attempting configure without explicit SEAL_DIR"
+        cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+      fi
+      info "Building project..."
+      cmake --build build -j"$NPROC"
+    fi
+  fi
+
+  # 3) Copy pprag_core extension to repo root so "import pprag_core" works without PYTHONPATH
+  SO_SRC="$(ls build/pprag_core*.so 2>/dev/null || true)"
+  if [ -n "$SO_SRC" ]; then
+    info "Copying $SO_SRC -> $ROOT_DIR/pprag_core.so"
+    cp -f "$SO_SRC" "$ROOT_DIR/pprag_core.so"
+  else
+    warn "Built pprag_core extension not found in build/; you may need to run the build step"
+  fi
+
+  # 4) Generate small dataset if missing (unless skipped)
+  if [ "$SKIP_DATA" = true ]; then
+    info "Skipping data generation (--skip-data)"
+  else
+    if [ ! -f "$ROOT_DIR/data/vectors_100k_768d.npy" ]; then
+      info "Generating 100k test dataset..."
+      PYTHONPATH=build python3 scripts/01_generate_data.py --scales 100k
+    else
+      info "Dataset ./data/vectors_100k_768d.npy already exists; skipping generation"
+    fi
+  fi
+
+  # 5) Optional quick verification run (uses sample mode from config)
+  if [ "$SKIP_QUICK" = true ]; then
+    info "Skipping quick verification run (--skip-quick)"
+  else
+    info "Running quick verification run (sample mode) to validate the build..."
+    set +e
+    PYTHONPATH=build python3 scripts/05_run_all.py
+    RC=$?
+    set -e
+    if [ $RC -ne 0 ]; then
+      warn "Quick run returned non-zero exit ($RC). You can inspect logs or run the script manually: PYTHONPATH=build python3 scripts/05_run_all.py"
+    else
+      info "Quick verification run completed successfully"
+    fi
+  fi
+
+  cat <<EOF
+  Bootstrap complete.
+  Notes:
+  - If you want the extension installed system-wide, build SEAL with sudo and install the pprag_core extension into your Python site-packages.
+
+  To run the benchmark now (uses built extension in build/):
+    PYTHONPATH=build python3 scripts/05_run_all.py
+
+  Or run without PYTHONPATH if the script copied the extension to repo root:
+    python3 scripts/05_run_all.py
+  EOF
