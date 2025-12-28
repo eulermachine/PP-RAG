@@ -19,11 +19,13 @@ except ImportError:
 class HEContext:
     def __init__(self, config: dict):
         enc_config = config.get('encryption', {})
-        # Note: SEAL params setup is done in C++ based on poly_modulus_degree
-        # We can extract params if config has them, otherwise use defaults
-        # For simplicity, we hardcode 8192 if not specified, matching C++ default
+        # Extract CKKS parameters from config
+        poly_modulus_degree = enc_config.get('poly_modulus_degree', 8192)
+        scale_power = enc_config.get('scale_power', 40)
+        scale = 2.0 ** scale_power
         
-        self.ctx = pprag_core.CKKSContext()
+        # Initialize CKKS context with configured parameters
+        self.ctx = pprag_core.CKKSContext(poly_modulus_degree, scale)
         print(f"[HE] Initialized CKKS Context (slots={self.ctx.slot_count()})")
         
     def encrypt(self, vector: np.ndarray):

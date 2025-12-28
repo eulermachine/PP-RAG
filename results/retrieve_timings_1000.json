@@ -1,13 +1,23 @@
 {
-  "timestamp": "2025-12-28T13:52:01.152039",
+  "timestamp": "2025-12-28T13:40:36.353348",
   "config": {
     "dataset": {
       "dimension": 256,
       "scales": [
         {
           "name": "100k",
-          "num_vectors": 1000,
+          "num_vectors": 100000,
           "output_path": "./data/vectors_100k_256d.npy"
+        },
+        {
+          "name": "1m",
+          "num_vectors": 1000000,
+          "output_path": "./data/vectors_1m_768d.npy"
+        },
+        {
+          "name": "10m",
+          "num_vectors": 10000000,
+          "output_path": "./data/vectors_10m_768d.npy"
         }
       ],
       "num_vectors": 100000,
@@ -51,17 +61,17 @@
     {
       "component": "encryption",
       "operation": "encrypt_estimate",
-      "total_time": 4.351672539996798,
+      "total_time": 4.786164440010907,
       "num_items": 1000,
-      "avg_time_per_item": 0.004351672539996798,
+      "avg_time_per_item": 0.004786164440010907,
       "details": {}
     },
     {
       "component": "secure_hnsw",
       "operation": "build_index_e2e",
-      "total_time": 4.3096501549989625,
+      "total_time": 4.426351700998566,
       "num_items": 1000,
-      "avg_time_per_item": 0.004309650154998962,
+      "avg_time_per_item": 0.004426351700998566,
       "details": {}
     }
   ],
@@ -69,52 +79,35 @@
     {
       "component": "encryption",
       "operation": "encrypt_query",
-      "total_time": 0.04255342400028894,
-      "num_items": 10,
-      "avg_time_per_item": 0.004255342400028894,
+      "total_time": 4.4182228640001995,
+      "num_items": 1000,
+      "avg_time_per_item": 0.0044182228640002,
       "details": {}
     },
     {
       "component": "secure_hnsw",
       "operation": "search_top1",
-      "total_time": 0.27200248400004057,
-      "num_items": 10,
-      "avg_time_per_item": 0.027200248400004057,
+      "total_time": 27.98143532799986,
+      "num_items": 1000,
+      "avg_time_per_item": 0.027981435327999862,
       "details": {}
     },
     {
       "component": "secure_hnsw",
       "operation": "search_top5",
-      "total_time": 0.29643501799910155,
-      "num_items": 10,
-      "avg_time_per_item": 0.029643501799910155,
+      "total_time": 27.85885151399998,
+      "num_items": 1000,
+      "avg_time_per_item": 0.02785885151399998,
       "details": {}
     },
     {
       "component": "secure_hnsw",
       "operation": "search_top10",
-      "total_time": 0.2905289009995613,
-      "num_items": 10,
-      "avg_time_per_item": 0.02905289009995613,
+      "total_time": 27.958898093000244,
+      "num_items": 1000,
+      "avg_time_per_item": 0.027958898093000242,
       "details": {}
     }
   ],
-  "update": [
-    {
-      "component": "secure_hnsw",
-      "operation": "insert_batch1",
-      "total_time": 0.004333726999902865,
-      "num_items": 1,
-      "avg_time_per_item": 0.004333726999902865,
-      "details": {}
-    },
-    {
-      "component": "secure_hnsw",
-      "operation": "insert_batch10",
-      "total_time": 0.04223667399855913,
-      "num_items": 10,
-      "avg_time_per_item": 0.004223667399855913,
-      "details": {}
-    }
-  ]
+  "update": []
 }
