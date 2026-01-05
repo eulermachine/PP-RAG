@@ -1,0 +1,28 @@
+# PP-RAG HE Component Benchmark Configuration - Variant 2
+# 专为1000向量级别优化的配置
+
+dataset:
+  dimension: 256
+  num_vectors: 1000  # 固定1000向量
+  output_path: "./data/vectors_100k_256d.npy"  # 从大数据集中采样
+  sample_size: 1000
+
+encryption:
+  scheme: "CKKS"
+  poly_modulus_degree: 8192
+  scale_power: 40
+
+index:
+  hnsw_m: 8
+  hnsw_ef_construction: 100
+  hnsw_ef_search: 50
+  softmin_degree: 4
+  softmin_temperature: 1.0
+
+benchmark:
+  use_sample: true
+  num_test_queries: 20
+  retrieval_top_k: [1, 5, 10]
+  update_batch_sizes: [1, 10]
+  num_workers: 4
+  batch_processing: true

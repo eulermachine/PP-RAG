@@ -1,0 +1,100 @@
+[HE] Using pprag_core module for base classes
+[HE] Using pprag_core2 module for SecureHNSWEncrypted2
+======================================================================
+PP-RAG HE Component Benchmark - Variant 2 (Full Suite)
+Hybrid with Partial Client Decryption - Communication Tracking
+======================================================================
+
+[Init] Initializing CKKS Context (Variant 2)...
+[HE] Initialized CKKS Context (slots=4096)
+[DataGenerator] Loaded (100000, 256) from ./data/vectors_100k_256d.npy
+[BenchmarkRunner2] Using sample mode: 1000 vectors
+
+[Config] Testing with 1000 vectors
+
+======================================================================
+PHASE 1: Setup (Index Building)
+======================================================================
+
+============================================================
+[Setup Benchmark V2] Testing with 1000 vectors
+============================================================
+
+[1/2] Benchmarking encryption throughput...
+      Avg Encrypt: 4.3303ms/vector
+      Est Total Encrypt: 4.3303s
+
+[2/2] Building Encrypted HNSW Index (Variant 2)...
+[HNSW2] Building Encrypted Index for 1000 vectors...
+[HNSW2] Indexed 100/1000[HNSW2] Indexed 200/1000[HNSW2] Indexed 300/1000[HNSW2] Indexed 400/1000[HNSW2] Indexed 500/1000[HNSW2] Indexed 600/1000[HNSW2] Indexed 700/1000[HNSW2] Indexed 800/1000[HNSW2] Indexed 900/1000[HNSW2] Indexed 1000/1000
+[HNSW2] Build complete.
+      Total Build Time: 4.3538s
+
+======================================================================
+PHASE 2: Retrieve (Query Search)
+======================================================================
+
+============================================================
+[Retrieve Benchmark V2] Testing 20 queries
+============================================================
+
+[1/2] Benchmarking Query Encryption...
+      Total: 0.0877s
+
+[2/2] Benchmarking Secure Search (Variant 2)...
+
+      Testing top_k=1...
+      Total: 1.4787s
+      Communication: 0.00 MB
+
+      Testing top_k=5...
+      Total: 1.4953s
+      Communication: 0.00 MB
+
+      Testing top_k=10...
+      Total: 1.5057s
+      Communication: 0.00 MB
+
+======================================================================
+PHASE 3: Update (Vector Insertion)
+======================================================================
+
+============================================================
+[Update Benchmark V2] Testing batch sizes: [1, 10]
+============================================================
+
+--- Batch size: 1 ---
+[HNSW2] Building Encrypted Index for 1 vectors...
+
+[HNSW2] Build complete.
+      Total: 0.0043s
+
+--- Batch size: 10 ---
+[HNSW2] Building Encrypted Index for 10 vectors...
+
+[HNSW2] Build complete.
+      Total: 0.0421s
+[BenchmarkRunner2] Results saved to ./results/timings2.json
+
+======================================================================
+BENCHMARK SUMMARY - Variant 2
+======================================================================
+
+[Setup Results]
+  encryption/encrypt_estimate: 4.3303s
+  secure_hnsw2/build_index_e2e: 4.3538s
+
+[Retrieve Results]
+  encryption/encrypt_query: 0.0877s
+  secure_hnsw2/search_top1: 1.4787s
+  secure_hnsw2/search_top5: 1.4953s
+  secure_hnsw2/search_top10: 1.5057s
+
+[Update Results]
+  secure_hnsw2/insert_batch1: 0.0043s
+  secure_hnsw2/insert_batch10: 0.0421s
+
+======================================================================
+All benchmarks complete!
+Results saved to: ./results/timings2.json
+======================================================================

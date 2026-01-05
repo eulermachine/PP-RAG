@@ -1,0 +1,116 @@
+{
+  "timestamp": "2026-01-05T04:34:57.766857",
+  "config": {
+    "dataset": {
+      "dimension": 256,
+      "num_vectors": 1000,
+      "output_path": "./data/vectors_100k_256d.npy",
+      "sample_size": 1000
+    },
+    "encryption": {
+      "scheme": "CKKS",
+      "poly_modulus_degree": 8192,
+      "scale_power": 40
+    },
+    "index": {
+      "hnsw_m": 8,
+      "hnsw_ef_construction": 100,
+      "hnsw_ef_search": 50,
+      "softmin_degree": 4,
+      "softmin_temperature": 1.0
+    },
+    "benchmark": {
+      "use_sample": true,
+      "num_test_queries": 20,
+      "retrieval_top_k": [
+        1,
+        5,
+        10
+      ],
+      "update_batch_sizes": [
+        1,
+        10
+      ],
+      "num_workers": 4,
+      "batch_processing": true
+    }
+  },
+  "setup": [
+    {
+      "component": "encryption",
+      "operation": "encrypt_estimate",
+      "total_time": 4.330280080002922,
+      "num_items": 1000,
+      "avg_time_per_item": 0.0043302800800029215,
+      "communication_bytes": 0,
+      "details": {}
+    },
+    {
+      "component": "secure_hnsw2",
+      "operation": "build_index_e2e",
+      "total_time": 4.353844441999627,
+      "num_items": 1000,
+      "avg_time_per_item": 0.004353844441999627,
+      "communication_bytes": 0,
+      "details": {}
+    }
+  ],
+  "retrieve": [
+    {
+      "component": "encryption",
+      "operation": "encrypt_query",
+      "total_time": 0.0877358530001402,
+      "num_items": 20,
+      "avg_time_per_item": 0.00438679265000701,
+      "communication_bytes": 0,
+      "details": {}
+    },
+    {
+      "component": "secure_hnsw2",
+      "operation": "search_top1",
+      "total_time": 1.478725311999824,
+      "num_items": 20,
+      "avg_time_per_item": 0.0739362655999912,
+      "communication_bytes": 0,
+      "details": {}
+    },
+    {
+      "component": "secure_hnsw2",
+      "operation": "search_top5",
+      "total_time": 1.4952548860001116,
+      "num_items": 20,
+      "avg_time_per_item": 0.07476274430000558,
+      "communication_bytes": 0,
+      "details": {}
+    },
+    {
+      "component": "secure_hnsw2",
+      "operation": "search_top10",
+      "total_time": 1.505747851000251,
+      "num_items": 20,
+      "avg_time_per_item": 0.07528739255001256,
+      "communication_bytes": 0,
+      "details": {}
+    }
+  ],
+  "update": [
+    {
+      "component": "secure_hnsw2",
+      "operation": "insert_batch1",
+      "total_time": 0.0043406920003690175,
+      "num_items": 1,
+      "avg_time_per_item": 0.0043406920003690175,
+      "communication_bytes": 0,
+      "details": {}
+    },
+    {
+      "component": "secure_hnsw2",
+      "operation": "insert_batch10",
+      "total_time": 0.04211245499982397,
+      "num_items": 10,
+      "avg_time_per_item": 0.004211245499982396,
+      "communication_bytes": 0,
+      "details": {}
+    }
+  ]
+}
