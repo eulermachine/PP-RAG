@@ -2,16 +2,16 @@
 
 dataset:
   dimension: 256
-  # 多级数据规模测试配置
+  # Multi-scale data size test configuration
   scales:
     - name: "100k"
       num_vectors: 1000
       output_path: "./data/vectors_100k_256d.npy"
-  # 向后兼容：单一配置（默认100k）
+  # Backwards compatibility: single configuration (default 100k)
   num_vectors: 100000
   output_path: "./data/vectors_100k_256d.npy"
-  # 小样本验证模式
-  sample_size: 1000  # 用于快速验证的样本量
+  # Small-sample validation mode
+  sample_size: 1000  # Sample size for quick validation
 
 encryption:
   scheme: "CKKS"
@@ -20,26 +20,26 @@ encryption:
   scale_power: 40  # 2^40
 
 index:
-  # 安全 HNSW 参数（优化版）
+  # Secure HNSW parameters (optimized)
   hnsw_m: 8
   hnsw_ef_construction: 100
   hnsw_ef_search: 50
-  # PolySoftmin 参数
+  # PolySoftmin parameters
   softmin_degree: 4
   softmin_temperature: 1.0
 
 benchmark:
-  # 使用样本模式加速测试
+  # Use sample mode to accelerate tests
   use_sample: true
   sample_sizes_per_scale:
     "100k": 1000
     "1m": 10000
     "10m": 100000
-  # 检索测试
+  # Retrieval test
   num_test_queries: 10  # Reduced for HE speed
   retrieval_top_k: [1, 5, 10]
-  # 更新测试
+  # Update test
   update_batch_sizes: [1, 10]
-  # 并行配置
+  # Parallel configuration
   num_workers: 4
   batch_processing: true

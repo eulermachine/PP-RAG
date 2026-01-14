@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 02_bench_setup.py
-测试Setup阶段：加密上传、安全K-Means、安全HNSW构建
+Benchmark the Setup phase: encryption upload, secure K-Means, secure HNSW build
 """
 import sys
 from pathlib import Path
@@ -21,7 +21,7 @@ def main():
     
     results = runner.benchmark_setup(vectors)
     
-    # 打印摘要
+    # Print summary
     print("\n" + "="*60)
     print("Setup Phase Summary")
     print("="*60)
@@ -33,7 +33,7 @@ def main():
         pct = r.total_time / total_time * 100
         print(f"  - {r.component}/{r.operation}: {r.total_time:.4f}s ({pct:.1f}%)")
     
-    # 保存结果
+    # Save results
     runner.results.save("./results/setup_timings.json")
 
 

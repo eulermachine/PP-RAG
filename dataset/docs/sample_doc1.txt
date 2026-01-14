@@ -1,0 +1,2 @@
+This is a sample document for RAG demonstration.
+It contains a short paragraph about the project and how retrieval should return helpful context.

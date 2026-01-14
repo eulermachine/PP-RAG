@@ -6,195 +6,195 @@
 
 ---
 
-## 🎯 快速开始（3步）
+````markdown
+# 🚀 PP-RAG Variant 2 — Full Implementation
 
-### 1️⃣ 编译变种2（仅首次）
-```bash
-cd /workspaces/PP-RAG/build2
-cmake -DCMAKE_BUILD_TYPE=Release .
-cmake --build . --config Release -j4
-```
+## 📌 One-line Summary
 
-### 2️⃣ 运行1000向量基准测试
+Variant 2 implements a hybrid strategy that combines cloud-side fully-homomorphic distance computation with client-side partial decryption for decision making, and explicitly tracks communication costs. New files use the "+2" naming convention.
+
+---
+
+### 2️⃣ Run the 1k-vector benchmark
 ```bash
 cd /workspaces/PP-RAG
 python3 scripts/05_run_all2.py
 ```
 
-### 3️⃣ 查看结果
+### 3️⃣ Inspect results
 ```bash
-# 详细数据
+# Raw timings
 python3 -m json.tool results/timings2.json | less
 
-# 执行日志
+# Build and run logs
 cat results/benchmark2_log.txt
 ```
 
-**预期用时**：~10分钟（编译2分钟 + 测试8分钟）
+Expected time: ~10 minutes (2m build + 8m tests)
 
 ---
 
-## 📁 新建文件清单（15个）
+## 📁 New files (15)
 
-### 核心实现（4个）
+### Core implementation (4)
 ```
-✅ src/core/secure_hnsw2.cpp          (190行) - 混合HNSW实现
-✅ src/core/bench_wrapper2.cpp        (70行)  - Python绑定
-✅ src/python/ckks_wrapper2.py        (130行) - Python包装器
-✅ src/python/bench_runner2.py        (240行) - 基准测试运行器
-```
-
-### 测试脚本（4个）
-```
-✅ scripts/02_bench_setup2.py         (25行)  - Setup阶段
-✅ scripts/03_bench_retrieve2.py      (35行)  - Retrieve阶段
-✅ scripts/04_bench_update2.py        (35行)  - Update阶段
-✅ scripts/05_run_all2.py             (85行)  - 完整流程
+✅ src/core/secure_hnsw2.cpp          (190 lines) - Hybrid HNSW implementation
+✅ src/core/bench_wrapper2.cpp        (70 lines)  - Python bindings
+✅ src/python/ckks_wrapper2.py        (130 lines) - Python HE wrapper
+✅ src/python/bench_runner2.py        (240 lines) - Benchmark runner
 ```
 
-### 配置与构建（3个）
+### Test scripts (4)
 ```
-✅ config/config2.yaml                (30行)  - 优化配置
-✅ CMakeLists2.txt                    (40行)  - CMake配置
-✅ build2.bat                         (30行)  - Windows脚本
-```
-
-### 文档（4个）
-```
-✅ VARIANT2_README.md                 详细设计文档（推荐首先阅读）
-✅ VARIANT2_SUMMARY.md                文件清单与特性总结
-✅ VARIANT2_CHECKLIST.md              实现验收清单
-✅ VARIANT2_QUICK_START.txt           快速启动指南
-✅ README_VARIANT2.md                 本文件（快速导航）
-✅ IMPLEMENTATION_SUMMARY.md          项目完成总结
+✅ scripts/02_bench_setup2.py         (25 lines)  - Setup phase
+✅ scripts/03_bench_retrieve2.py      (35 lines)  - Retrieve phase
+✅ scripts/04_bench_update2.py        (35 lines)  - Update phase
+✅ scripts/05_run_all2.py             (85 lines)  - Full pipeline
 ```
 
-### 编译产物（1个）
+### Config & build (3)
+```
+✅ config/config2.yaml                (30 lines)  - Optimized config
+✅ CMakeLists2.txt                    (40 lines)  - CMake config
+✅ build2.bat                         (30 lines)  - Windows build script
+```
+
+### Documentation (6)
+```
+✅ VARIANT2_README.md                 Detailed design (recommended first read)
+✅ VARIANT2_SUMMARY.md                File list and feature summary
+✅ VARIANT2_CHECKLIST.md              Acceptance checklist
+✅ VARIANT2_QUICK_START.txt           Quick start guide
+✅ README_VARIANT2.md                 This file (quick navigation)
+✅ IMPLEMENTATION_SUMMARY.md          Completion summary
+```
+
+### Build artifact (1)
 ```
 ✅ build2/pprag_core2.cpython-312-x86_64-linux-gnu.so (1.9MB)
-   └─ 已复制到：./pprag_core2.cpython-312-x86_64-linux-gnu.so
+   └─ copied to: ./pprag_core2.cpython-312-x86_64-linux-gnu.so
 ```
 
 ---
 
-## 🔐 核心设计：混合加密策略
+## 🔐 Core Design: Hybrid Encryption Strategy
 
-### 版本1 vs 变种2
+### Version 1 vs Variant 2
 
 ```
 ┌─────────────────┬──────────────────┬──────────────────┐
-│                 │ 版本1             │ 变种2 (推荐)      │
+│                 │ Version 1         │ Variant 2 (recommended) │
 ├─────────────────┼──────────────────┼──────────────────┤
-│ 距离计算        │ 云（全同态）      │ 云（全同态）✓    │
-│ 距离比较        │ 云（需解密）      │ 客户端✓         │
-│ 通信追踪        │ ✗                 │ ✓               │
-│ 客户端参与      │ 最小              │ 主动决策✓       │
-│ 代码复用        │ 100%              │ 95%✓           │
-│ 配置冲突        │ ✗                 │ 分离✓          │
+│ Distance calc   │ Cloud (fully HE)  │ Cloud (fully HE) ✓  │
+│ Distance compare│ Cloud (requires decryption) │ Client-side ✓     │
+│ Communication   │ ✗                 │ ✓                │
+│ Client involvement│ Minimal         │ Active decisions ✓│
+│ Code reuse      │ 100%              │ ~95% ✓           │
+│ Config conflicts│ ✗                 │ Isolated ✓       │
 └─────────────────┴──────────────────┴──────────────────┘
 ```
 
-### 搜索流程
+### Search Flow
 
 ```
-Cloud端：
-  1. 接收加密查询 E(query)
-  2. 为所有邻居计算加密距离 {E(d₁), E(d₂), ...}
-  3. 打包发送到客户端
+Cloud:
+  1. Receive encrypted query E(query)
+  2. Compute encrypted distances for neighbors {E(d1), E(d2), ...}
+  3. Package and send distances to client
 
-Network：
-  传输加密距离集合（~64KB/距离）
+Network:
+  Transmit encrypted distance set (~64KB per ciphertext)
 
-Client端：
-  4. 接收加密距离
-  5. 解密并评估 {d₁, d₂, ...}（部分解密）
-  6. 基于明文距离选择top-ef候选
-  7. 告诉Cloud端下一步探索哪些节点
+Client:
+  4. Receive encrypted distances
+  5. Partially decrypt and evaluate {d1, d2, ...}
+  6. Select top-ef candidates in plaintext
+  7. Instruct Cloud which nodes to explore next
 
-Repeat：循环遍历下一层
-```
-
----
-
-## 📊 性能数据
-
-### 1000向量基准（256维，20查询）
-
-| 操作 | 时间 | 每单位 |
-|------|------|--------|
-| **Setup** |  |  |
-| 加密1000向量 | 4.33s | 4.3ms/向量 |
-| 构建HNSW索引 | 4.35s | 4.4ms/向量 |
-| **Retrieve** |  |  |
-| 加密20查询 | 0.088s | 4.4ms/查询 |
-| 搜索top-1 | 1.48s | 74ms/查询 |
-| 搜索top-10 | 1.51s | 75ms/查询 |
-| **Update** |  |  |
-| 插入单向量 | 0.0043s | 4.3ms |
-| 插入10向量 | 0.042s | 4.2ms/向量 |
-
-### 通信成本
-
-```
-每次Layer搜索传输：
-  - ef个候选 × CIPHERTEXT_SIZE (65536字节)
-  - 例：top-10搜索，平均100候选/层 → ~6.5MB/查询
+Repeat: iterate the next layer
 ```
 
 ---
 
-## 🔗 文件导航
+## 📊 Performance Data
 
-| 想要... | 看这个文件 |
-|--------|-----------|
-| 快速开始 | VARIANT2_QUICK_START.txt |
-| 理解设计 | VARIANT2_README.md |
-| 查看清单 | VARIANT2_SUMMARY.md |
-| 验收测试 | VARIANT2_CHECKLIST.md |
-| 项目总结 | IMPLEMENTATION_SUMMARY.md |
-| 快速导航 | README_VARIANT2.md (本文件) |
+### 1k-vector benchmark (256-d, 20 queries)
+
+| Operation | Time | Per unit |
+|-----------|------|----------|
+| **Setup** |      |          |
+| Encrypt 1000 vectors | 4.33s | 4.3ms/vector |
+| Build HNSW index      | 4.35s | 4.4ms/vector |
+| **Retrieve** |     |          |
+| Encrypt 20 queries   | 0.088s | 4.4ms/query |
+| Search top-1          | 1.48s  | 74ms/query  |
+| Search top-10         | 1.51s  | 75ms/query  |
+| **Update**           |       |            |
+| Insert single vector | 0.0043s | 4.3ms     |
+| Insert 10 vectors    | 0.042s  | 4.2ms/vector |
+
+### Communication Cost
+
+```
+Per-layer transfer during a search:
+  - ef candidates × CIPHERTEXT_SIZE (65536 bytes)
+  - Example: top-10 search, ~100 candidates/layer → ~6.5MB/query
+```
 
 ---
 
-## 💻 API使用示例
+## 🔗 File Navigation
 
-### 初始化
+| Need... | See |
+|---------|-----|
+| Quick start | VARIANT2_QUICK_START.txt |
+| Design details | VARIANT2_README.md |
+| File list | VARIANT2_SUMMARY.md |
+| Acceptance tests | VARIANT2_CHECKLIST.md |
+| Project summary | IMPLEMENTATION_SUMMARY.md |
+| Quick navigation | README_VARIANT2.md (this file) |
+
+---
+
+## 💻 API Usage Examples
+
+### Initialization
 ```python
 from src.python.ckks_wrapper2 import HEContext2, SecureHNSWWrapper2
 from src.python.data_generator import load_config, load_dataset
 
-# 加载配置
+# Load config
 config = load_config("./config/config2.yaml")
 
-# 初始化加密上下文
+# Initialize HE context
 he_ctx = HEContext2(config)
 
-# 初始化HNSW索引（变种2）
+# Initialize HNSW index (Variant 2)
 hnsw = SecureHNSWWrapper2(he_ctx, config)
 ```
 
-### 构建索引
+### Build index
 ```python
-# 加载向量
+# Load vectors
 vectors = load_dataset("./data/vectors_100k_256d.npy")
-data = vectors[:1000]  # 取前1000个
+data = vectors[:1000]
 
-# 构建加密索引
+# Build encrypted index
 hnsw.build_index(data)
 ```
 
-### 搜索并追踪通信
+### Search and track communication
 ```python
-# 准备查询
+# Prepare query
 query = vectors[1000]
 
-# 重置通信计数器
+# Reset comm counter
 hnsw.reset_communication_counter()
 
-# 执行搜索
+# Execute search
 results = hnsw.search(query, k=10)
 
-# 获取通信统计
+# Get communication stats
 comm_bytes = hnsw.get_communication_bytes()
 comm_mb = comm_bytes / (1024 * 1024)
 
@@ -205,159 +205,156 @@ print(f"Comm per result: {comm_bytes / len(results) / 1024:.2f} KB")
 
 ---
 
-## 🛠️ 命令快速参考
+## 🛠️ Quick command reference
 
 ```bash
-# 仅编译变种2（不编译原版本）
+# Build only Variant 2 (leave original version untouched)
 cd /workspaces/PP-RAG/build2
 cmake -DCMAKE_BUILD_TYPE=Release .
 cmake --build . --config Release -j4
 
-# 运行完整基准（Setup + Retrieve + Update）
+# Run full benchmark (Setup + Retrieve + Update)
 python3 /workspaces/PP-RAG/scripts/05_run_all2.py
 
-# 单独运行各阶段
-python3 scripts/02_bench_setup2.py     # 索引构建
-python3 scripts/03_bench_retrieve2.py  # 查询搜索
-python3 scripts/04_bench_update2.py    # 批量更新
+# Run individual phases
+python3 scripts/02_bench_setup2.py     # index build
+python3 scripts/03_bench_retrieve2.py  # query search
+python3 scripts/04_bench_update2.py    # batch updates
 
-# 查看结果
+# Inspect results
 python3 -m json.tool results/timings2.json | head -100
 
-# 对比版本1和变种2
+# Compare Version 1 and Variant 2
 diff -u results/timings.json results/timings2.json
 ```
 
 ---
 
-## ✨ 关键特性
+## ✨ Key Features
 
-### ✅ 完全兼容
-- 不修改任何源文件
-- 不改动原版本代码
-- 可与原版本并行运行
+### ✅ Fully compatible
+- No modifications to original source files
+- Original version remains unchanged
+- Both versions can run side-by-side
 
-### ✅ 清晰的命名规则
-- 所有新文件采用"名+2"格式
-- 易于维护和追踪
+### ✅ Clear naming
+- New files use the "name+2" convention for easy maintenance
 
-### ✅ 通信可见性
-- 自动追踪每次搜索的网络开销
-- 支持通信成本分析
+### ✅ Communication visibility
+- Automatically track network overhead per search
+- Support communication cost analysis
 
-### ✅ 文档完整
-- 快速启动指南
-- 详细设计说明
-- API使用示例
-- 验收清单
-
----
-
-## 🎓 学习路径
-
-### 初学者
-1. 看这个文件（README_VARIANT2.md）
-2. 运行 `python3 scripts/05_run_all2.py`
-3. 查看 `results/timings2.json`
-
-### 设计理解
-1. 读 VARIANT2_README.md
-2. 研究协议流程部分
-3. 对比版本1设计
-
-### 深度学习
-1. 阅读 `src/core/secure_hnsw2.cpp`
-2. 理解 `greedy_search_layer_v2` 方法
-3. 研究通信跟踪机制
-
-### 扩展开发
-1. 参考 VARIANT2_SUMMARY.md 的API示例
-2. 修改 config2.yaml 调整参数
-3. 开发自己的应用
+### ✅ Complete documentation
+- Quick start guide
+- Detailed design notes
+- API examples
+- Acceptance checklist
 
 ---
 
-## 🐛 故障排除
+## 🎓 Learning Path
 
-### 编译错误
+### Beginners
+1. Read this file (README_VARIANT2.md)
+2. Run `python3 scripts/05_run_all2.py`
+3. Inspect `results/timings2.json`
+
+### Design overview
+1. Read VARIANT2_README.md
+2. Study the protocol flow
+3. Compare with Version 1 design
+
+### Deep dive
+1. Read `src/core/secure_hnsw2.cpp`
+2. Understand `greedy_search_layer_v2`
+3. Study the communication tracking implementation
+
+### Extensions
+1. Refer to VARIANT2_SUMMARY.md for API examples
+2. Tweak `config2.yaml` parameters
+3. Build your own applications
+
+---
+
+## 🐛 Troubleshooting
+
+### Build errors
 ```bash
-# 检查CMake配置
+# Check CMake configuration
 cd build2
 cmake --version
 cmake -DCMAKE_BUILD_TYPE=Release . 2>&1 | grep -i error
 
-# 查看详细编译错误
+# Show verbose build errors
 cmake --build . --config Release --verbose
 ```
 
-### 运行错误
+### Runtime errors
 ```bash
-# 检查模块导入
+# Verify modules import
 python3 -c "import pprag_core; import pprag_core2; print('OK')"
 
-# 查看执行日志
+# Tail logs
 tail -100 results/benchmark2_log.txt
 ```
 
-### 性能问题
-- 检查 config2.yaml 中的 sample_size
-- 减少 num_test_queries（默认20）
-- 使用 top_k=[1] 而非 [1,5,10]
+### Performance issues
+- Check `sample_size` in `config2.yaml`
+- Reduce `num_test_queries` (default 20)
+- Use `top_k=[1]` instead of `[1,5,10]`
 
 ---
 
-## 📞 支持文档
+## 📞 Support docs
 
-| 问题 | 查看 |
-|------|------|
-| 怎样快速开始 | VARIANT2_QUICK_START.txt |
-| 设计是什么 | VARIANT2_README.md |
-| 有哪些文件 | VARIANT2_SUMMARY.md |
-| 怎样验证 | VARIANT2_CHECKLIST.md |
-| 项目完成度 | IMPLEMENTATION_SUMMARY.md |
-| 快速导航 | 本文件 |
-
----
-
-## 📈 项目统计
-
-- **新建文件**：15个
-- **代码行数**：~1770行
-- **C++ 代码**：~260行
-- **Python 代码**：~480行
-- **配置与脚本**：~230行
-- **文档**：~800行
+| Question | See |
+|----------|-----|
+| Quick start | VARIANT2_QUICK_START.txt |
+| Design     | VARIANT2_README.md |
+| File list  | VARIANT2_SUMMARY.md |
+| Verification | VARIANT2_CHECKLIST.md |
+| Completion  | IMPLEMENTATION_SUMMARY.md |
+| Quick nav   | This file |
 
 ---
 
-## ✅ 验收状态
+## 📈 Project stats
 
-- [x] 编译成功
-- [x] 功能测试通过
-- [x] 1000向量基准完成
-- [x] 通信追踪就位
-- [x] 文档完整
-- [x] 可生产环境
-
----
-
-## 🎉 完成时间
-
-**创建日期**：2026-01-05  
-**状态**：✅ 完成并验证  
-**下一步**：部署或二次开发
+- **New files**: 15
+- **Lines of code**: ~1770
+- **C++ code**: ~260 lines
+- **Python code**: ~480 lines
+- **Configs & scripts**: ~230 lines
+- **Documentation**: ~800 lines
 
 ---
 
-**开始探索**：
+## ✅ Acceptance status
+
+- [x] Build succeeds
+- [x] Functional tests pass
+- [x] 1000-vector benchmark completed
+- [x] Communication tracking enabled
+- [x] Documentation complete
+- [x] Suitable for production
+
+---
+
+## 🎉 Completion
+
+**Created**: 2026-01-05
+**Status**: ✅ Completed and verified
+**Next**: deployment or further development
+
+**Get started**:
 ```bash
 cd /workspaces/PP-RAG
-# 查看快速启动指南
+# View quick start
 cat VARIANT2_QUICK_START.txt
-# 或运行基准
+# or run the benchmark
 python3 scripts/05_run_all2.py
 ```
 
 ---
 
-*PP-RAG 变种2 - 混合型同态加密搜索系统*
+*PP-RAG Variant 2 — Hybrid Homomorphic Search System*

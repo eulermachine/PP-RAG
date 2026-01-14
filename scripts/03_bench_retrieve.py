@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 03_bench_retrieve.py
-测试Retrieve阶段：查询加密、安全HNSW搜索
+Benchmark the Retrieve phase: encrypted queries and secure HNSW search
 """
 import sys
 from pathlib import Path
@@ -19,14 +19,14 @@ def main():
     runner = BenchmarkRunner("./config/config.yaml")
     vectors = runner.load_data()
     
-    # 需要先构建索引
+    # Prerequisite: build the index first
     print("\n[Prerequisite] Building index first...")
     runner.benchmark_setup(vectors)
     
-    # 运行检索测试
+    # Run retrieval tests
     results = runner.benchmark_retrieve(vectors)
     
-    # 打印摘要
+    # Print summary
     print("\n" + "="*60)
     print("Retrieve Phase Summary")
     print("="*60)

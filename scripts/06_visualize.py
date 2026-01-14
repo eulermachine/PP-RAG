@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 06_visualize.py
-从已有结果生成可视化图表
+Generate visualization figures from existing results
 """
 import sys
 from pathlib import Path

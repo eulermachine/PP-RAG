@@ -13,61 +13,77 @@
 
 ### 密文比较策略 (Ciphertext Comparison)
 
-**版本1**：
-- 服务器计算加密距离
-- 服务器直接比较加密距离（通过解密）决定导航
-- 访问模式泄露
+````markdown
+# PP-RAG Variant 2 — Hybrid Homomorphic Scheme
 
-**变种2**：
-- ✅ 云计算所有距离相关操作（完全同态）
-- ✅ 云将加密距离发送给客户端
-- ✅ **客户端部分解密中间距离**（如聚类距离、HNSW层候选）
-- ✅ 客户端基于明文距离决定下一导航步骤
-- 📊 通信开销被显式跟踪
+## Overview
 
-### 协议流程
-
-#### 搜索阶段 (Layer Traversal):
+Variant 2 uses a hybrid approach for secure indexing that clearly separates cloud computation from client decision-making:
 
 ```
-1. 云：为所有邻居计算加密距离 (HE 运算)
-2. 云：将加密距离集合 {E(d_1), E(d_2), ...} 传送给客户端
-3. 客户端：解密中间距离 {d_1, d_2, ...}（部分解密）
-4. 客户端：基于明文距离选择前 ef 个候选（客户端决策）
-5. 云：继续探索选中的候选节点
+Prototype (Version 1): Fully homomorphic — the cloud performs all distance computations and comparisons
+Variant 2 (Hybrid): Cloud computes distances; the client partially decrypts intermediate distances and makes navigation decisions
 ```
 
-## 文件结构
+## Core Design
+
+### Ciphertext Comparison Strategy
+
+Version 1:
+- The server computes encrypted distances
+- The server compares encrypted distances (via decryption) to decide navigation
+- Access patterns are leaked
+
+Variant 2:
+- ✅ The cloud performs all distance-related operations (fully homomorphic)
+- ✅ The cloud sends encrypted distances to the client
+- ✅ The client partially decrypts intermediate distances (e.g., cluster distances, HNSW layer candidates)
+- ✅ The client uses plaintext distances to decide the next navigation steps
+- 📊 Communication overhead is explicitly tracked
+
+### Protocol Flow
+
+#### Search Phase (Layer Traversal):
+
+```
+1. Cloud: compute encrypted distances for all neighbors (HE operations)
+2. Cloud: send the set of encrypted distances {E(d_1), E(d_2), ...} to the client
+3. Client: partially decrypt the intermediate distances {d_1, d_2, ...}
+4. Client: select the top-ef candidates in plaintext (client decision)
+5. Cloud: continue exploring the selected candidate nodes
+```
+
+## File Layout
 
 ```
 src/core/
-  ├── secure_hnsw2.cpp      # 变种2的C++实现（混合策略）
-  └── bench_wrapper2.cpp    # Python绑定（仅导出SecureHNSWEncrypted2）
+  ├── secure_hnsw2.cpp      # C++ implementation for Variant 2 (hybrid strategy)
+  └── bench_wrapper2.cpp    # Python bindings (exports SecureHNSWEncrypted2)
 
 src/python/
-  ├── ckks_wrapper2.py      # 高层Python包装器（使用pprag_core + pprag_core2）
-  ├── bench_runner2.py      # 基准测试运行器（通信跟踪）
-  
+  ├── ckks_wrapper2.py      # High-level Python wrapper (uses pprag_core + pprag_core2)
+  └── bench_runner2.py      # Benchmark runner with communication tracking
+
 scripts/
-  ├── 02_bench_setup2.py    # Setup阶段测试
-  ├── 03_bench_retrieve2.py # Retrieve阶段测试（通信测量）
-  ├── 04_bench_update2.py   # Update阶段测试
-  └── 05_run_all2.py        # 完整的1000向量基准测试
+  ├── 02_bench_setup2.py    # Setup phase benchmark
+  ├── 03_bench_retrieve2.py # Retrieve phase benchmark (measures communication)
+  ├── 04_bench_update2.py   # Update phase benchmark
+  └── 05_run_all2.py        # Full 1k-vector benchmark workflow
 
 config/
-  └── config2.yaml          # 变种2的专用配置（1000向量）
+  └── config2.yaml          # Variant 2 specific config (1k vectors)
 
-build2/                      # 变种2的编译目录
-build2.bat                   # Windows编译脚本
-CMakeLists2.txt             # 变种2的CMake配置
+build2/                      # Build directory for Variant 2
+build2.bat                   # Windows build script
+CMakeLists2.txt              # CMake configuration for Variant 2
 ```
 
-## 编译与运行
+## Build & Run
 
-### 编译
+### Build
 
 ```bash
-# Linux/Mac
+# Linux/macOS
 cd /workspaces/PP-RAG/build2
 cmake -DCMAKE_BUILD_TYPE=Release .
 cmake --build . --config Release -j4
@@ -77,103 +93,105 @@ cd /workspaces/PP-RAG
 build2.bat
 ```
 
-### 运行基准测试（1000向量）
+### Run the 1k-vector benchmark
 
 ```bash
-# 完整测试套件（Setup + Retrieve + Update）
+# Full test suite (Setup + Retrieve + Update)
 python3 scripts/05_run_all2.py
 
-# 单个阶段
-python3 scripts/02_bench_setup2.py    # 索引构建
-python3 scripts/03_bench_retrieve2.py # 查询搜索 + 通信测量
-python3 scripts/04_bench_update2.py   # 向量更新
+# Per-phase runs
+python3 scripts/02_bench_setup2.py    # index build
+python3 scripts/03_bench_retrieve2.py # query search + communication measurement
+python3 scripts/04_bench_update2.py   # vector updates
 ```
 
-## 结果输出
+## Results
 
-基准测试结果保存在：
-- `results/timings2.json` - 完整的基准数据（包含通信字节数）
-- `results/benchmark2_log.txt` - 详细的执行日志
+Benchmark outputs are stored at:
+- `results/timings2.json` — full benchmark data (includes communication bytes)
+- `results/benchmark2_log.txt` — detailed execution log
 
-### 关键指标
+### Key Metrics
 
-1. **Setup（索引构建）**
-   - 加密批次处理时间
-   - HNSW索引构建时间
+1. Setup (index build)
+   - encryption batch processing time
+   - HNSW index build time
 
-2. **Retrieve（查询）**
-   - 查询加密时间
-   - 搜索延迟（按top-k分层）
-   - **通信开销**（加密距离传输字节数）
-   - 客户端部分解密时间（隐含）
+2. Retrieve (queries)
+   - query encryption time
+   - search latency (per top-k)
+   - **communication cost** (bytes transferred for encrypted distances)
+   - client partial decryption time (implicit)
 
-3. **Update（更新）**
-   - 不同批次大小的插入时间
+3. Update
+   - insertion time for different batch sizes
 
-## 通信成本分析
+## Communication Cost Analysis
 
-变种2显式跟踪通信成本：
+Variant 2 explicitly tracks communication cost:
 
 ```python
 class SecureHNSWEncrypted2:
     def get_communication_bytes(self) -> int:
-        """返回搜索过程中传输的加密距离总字节数"""
-        
+        """Return total bytes of encrypted-distance data transferred during a search."""
+
     def reset_communication_counter(self):
-        """重置通信计数器"""
+        """Reset the communication counter."""
 ```
 
-**估计值**（CKKS 8192 poly degree）：
-- 单个密文大小：≈ 64 KB（8192系数 × 8字节）
-- 单次查询搜索通信：ef × candidates × 64 KB
-- 例：ef=50，每层平均100候选 → ≈320 MB/层
+Estimated values (CKKS, poly_degree=8192):
+- Ciphertext size ≈ 64 KB (8192 coefficients × 8 bytes)
+- Per-query transfer ≈ ef × candidates × 64 KB
+- Example: ef=50, ~100 candidates/layer → ~320 MB per layer
 
-## 与版本1的对比
+## Comparison with Version 1
 
-| 特性 | 版本1 | 变种2 |
-|------|-------|-------|
-| 距离计算 | 云（同态） | 云（同态） |
-| 距离比较 | 云（需解密） | 客户端（部分解密） |
-| 访问模式泄露 | 是 | 仍然泄露（但分散到客户端） |
-| 通信跟踪 | 否 | **是** |
-| 客户端参与 | 最小 | **主动决策导航** |
-| 实现复杂度 | 较低 | 中等 |
-| 实际应用场景 | 完全离线查询 | 交互式查询 |
+| Feature               | Version 1         | Variant 2 (Hybrid)       |
+|-----------------------|-------------------|--------------------------|
+| Distance computation  | Cloud (HE)        | Cloud (HE)               |
+| Distance comparison   | Cloud (decrypt)   | Client (partial decrypt) |
+| Access pattern leak   | Yes               | Still leaked (client-side)
+| Communication tracking| No                | **Yes**                  |
+| Client involvement    | Minimal           | **Active decision-making**|
+| Implementation effort | Lower             | Medium                   |
+| Use case             | Offline queries    | Interactive queries      |
 
-## 性能特征（1000向量基准）
+## Performance (1k-vector benchmark)
 
 ```
 Setup:
-  - 加密：4.33s (4.3ms/向量)
-  - 索引构建：4.35s (4.4ms/向量)
-  
+  - encryption: 4.33s (4.3 ms/vector)
+  - index build: 4.35s (4.4 ms/vector)
+
 Retrieve (20 queries):
-  - 查询加密：0.088s (4.4ms/查询)
-  - 搜索 top-1：1.48s (74ms/查询)
-  - 搜索 top-5：1.50s (75ms/查询)
-  - 搜索 top-10：1.51s (75ms/查询)
-  
+  - query encryption: 0.088s (4.4 ms/query)
+  - search top-1: 1.48s (74 ms/query)
+  - search top-5: 1.50s (75 ms/query)
+  - search top-10: 1.51s (75 ms/query)
+
 Update:
-  - 单向量：0.0043s
-  - 10向量：0.042s (4.2ms/向量)
+  - single vector: 0.0043s
+  - 10 vectors: 0.042s (4.2 ms/vector)
 ```
 
-## 关键创新点
+## Key Innovations
 
-1. **混合加密范式**：云端保持所有运算的同态性，客户端通过部分解密获得灵活性
-2. **通信可见性**：显式测量和报告每个查询的网络开销
-3. **客户端导航**：客户端主动参与索引遍历决策，减少云端负担
-4. **兼容现有框架**：与版本1共享相同的CKKS参数和数据格式
+1. Hybrid encryption paradigm: the cloud preserves homomorphic computation while the client gains flexibility via partial decryption.
+2. Communication visibility: explicit measurement and reporting of per-query network overhead.
+3. Client-driven navigation: the client actively participates in index traversal decisions, reducing cloud load.
+4. Compatibility: shares CKKS parameters and data formats with Version 1.
 
-## 后续优化方向
+## Future Work
 
-- [ ] 批量查询时的通信压缩
-- [ ] 加密距离的智能缓存
-- [ ] 分层距离的增量解密
-- [ ] 客户端-服务器通信的流水线化
+- [ ] Communication compression for batch queries
+- [ ] Smart caching for encrypted distances
+- [ ] Incremental decryption for layered distances
+- [ ] Pipeline client-server communication
 
 ---
 
-**创建时间**：2026-01-05  
-**配置**：CKKS poly_degree=8192, scale=2^40  
-**测试规模**：1000向量，256维，20查询
+**Created**: 2026-01-05  
+**Config**: CKKS poly_degree=8192, scale=2^40  
+**Test scale**: 1000 vectors, 256 dims, 20 queries
+
+````

@@ -1,7 +1,7 @@
 /**
  * bench_encrypt_cpp.cpp
- * C++ 层级的加密性能采样（使用 OpenMP 并行）
- * 编译：g++ -O3 -fopenmp -I/path/to/seal/include bench_encrypt_cpp.cpp -o bench_encrypt_cpp -lseal
+ * C++-level encryption performance sampling (uses OpenMP for parallelism)
+ * Compile: g++ -O3 -fopenmp -I/path/to/seal/include bench_encrypt_cpp.cpp -o bench_encrypt_cpp -lseal
  */
 
 #include <iostream>
@@ -15,7 +15,7 @@
 using namespace seal;
 
 int main() {
-    // SEAL 初始化（8192 poly degree, CKKS）
+    // SEAL initialization (8192 poly degree, CKKS)
     EncryptionParameters parms(scheme_type::ckks);
     size_t poly_degree = 8192;
     parms.set_poly_modulus_degree(poly_degree);
@@ -32,7 +32,7 @@ int main() {
     double scale = pow(2.0, 40);
     size_t slot_count = encoder.slot_count();
     
-    // 生成测试向量（1000 个，每个 256 维）
+    // Generate test vectors (1000 vectors, each 256-dim)
     std::vector<std::vector<double>> vectors(1000);
     std::mt19937 rng(42);
     std::uniform_real_distribution<double> dist(-1.0, 1.0);
@@ -45,7 +45,7 @@ int main() {
         }
     }
     
-    // ===== 单线程加密 =====
+    // ===== SERIAL ENCRYPTION =====
     auto start = std::chrono::high_resolution_clock::now();
     std::vector<Ciphertext> encrypted_serial(1000);
     for (size_t i = 0; i < 1000; ++i) {
@@ -61,7 +61,7 @@ int main() {
     std::cout << "Per-vector: " << (serial_time * 1000 / 1000) << "ms" << std::endl;
     std::cout << "Throughput: " << (1000 / serial_time) << " vectors/sec" << std::endl;
     
-    // ===== 并行加密（OpenMP） =====
+    // ===== PARALLEL ENCRYPTION (OpenMP) =====
     start = std::chrono::high_resolution_clock::now();
     std::vector<Ciphertext> encrypted_parallel(1000);
     #pragma omp parallel for
@@ -81,7 +81,7 @@ int main() {
     std::cout << "\n=== SPEEDUP ===" << std::endl;
     std::cout << "Parallel/Serial: " << (serial_time / parallel_time) << "x" << std::endl;
     
-    // 验证结果正确性
+    // Verify correctness
     std::cout << "\nVerification: Both methods produced " << encrypted_serial.size() 
               << " ciphertexts (expected 1000)" << std::endl;
     

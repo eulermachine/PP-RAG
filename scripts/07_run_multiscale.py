@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 07_run_multiscale.py
-多级规模基准测试：分别对10万、100万、1000万条数据运行相同测试
+Multi-scale benchmarks: run the same tests for 100k, 1m, and 10m vectors
 """
 import sys
 import argparse
@@ -20,19 +20,19 @@ from src.python.visualizer import generate_scale_comparison_figures
 
 
 class MultiScaleRunner:
-    """多规模基准测试运行器"""
+    """Multi-scale benchmark runner"""
     
     def __init__(self, config_path: str = "./config/config.yaml"):
         self.config = load_config(config_path)
         self.results = {}
         
     def run_scale(self, scale_name: str) -> dict:
-        """运行单个规模的完整测试"""
+        """Run the full test for a single data scale"""
         print(f"\n{'#'*70}")
         print(f"# Testing Scale: {scale_name.upper()}")
         print(f"{'#'*70}")
         
-        # 获取该规模的配置
+        # Obtain configuration for the requested scale
         scale_config = None
         for s in self.config['dataset']['scales']:
             if s['name'] == scale_name:
@@ -45,17 +45,17 @@ class MultiScaleRunner:
         data_path = scale_config['output_path']
         num_vectors = scale_config['num_vectors']
         
-        # 检查数据文件是否存在
+        # Check that the data file exists
         if not Path(data_path).exists():
             print(f"[ERROR] Data file not found: {data_path}")
             print(f"  Run: python scripts/01_generate_data.py --scales {scale_name}")
             return None
         
-        # 加载数据
+        # Load data
         print(f"\nLoading {scale_name} dataset from {data_path}...")
         full_vectors = load_dataset(data_path)
         
-        # 使用样本模式（对大规模数据尤其重要）
+        # Use sample mode (important for large-scale data)
         use_sample = self.config['benchmark'].get('use_sample', True)
         if use_sample:
             sample_sizes = self.config['benchmark'].get('sample_sizes_per_scale', {})
@@ -65,15 +65,15 @@ class MultiScaleRunner:
         else:
             vectors = full_vectors
         
-        # 根据规模调整聚类数
+        # Adjust number of clusters according to scale
         cluster_counts = self.config['index'].get('num_clusters_per_scale', {})
         num_clusters = cluster_counts.get(scale_name, self.config['index']['num_clusters'])
         
-        # 创建运行器并设置自定义参数
+        # Create benchmark runner and set custom parameters
         runner = BenchmarkRunner("./config/config.yaml")
         runner.config['index']['num_clusters'] = num_clusters
         
-        # 运行三阶段测试
+        # Run the three-stage benchmark tests
         scale_results = {
             'scale': scale_name,
             'num_vectors': num_vectors,
@@ -84,7 +84,7 @@ class MultiScaleRunner:
             'update': []
         }
         
-        # === SETUP阶段 ===
+        # === SETUP phase ===
         print(f"\n{'='*60}")
         print(f"[{scale_name}] SETUP Phase")
         print(f"{'='*60}")
@@ -95,7 +95,7 @@ class MultiScaleRunner:
         total_setup = sum(r.total_time for r in setup_results)
         print(f"\nSetup total time: {total_setup:.4f}s")
         
-        # === RETRIEVE阶段 ===
+        # === RETRIEVE phase ===
         print(f"\n{'='*60}")
         print(f"[{scale_name}] RETRIEVE Phase")
         print(f"{'='*60}")
@@ -103,7 +103,7 @@ class MultiScaleRunner:
         retrieve_results = runner.benchmark_retrieve(vectors)
         scale_results['retrieve'] = [r.to_dict() for r in retrieve_results]
         
-        # === UPDATE阶段 ===
+        # === UPDATE phase ===
         print(f"\n{'='*60}")
         print(f"[{scale_name}] UPDATE Phase")
         print(f"{'='*60}")
@@ -114,7 +114,7 @@ class MultiScaleRunner:
         return scale_results
     
     def run_all_scales(self, scales: list = None) -> dict:
-        """运行所有指定规模的测试"""
+        """Run tests for all specified scales"""
         if scales is None:
             scales = [s['name'] for s in self.config['dataset']['scales']]
         
@@ -132,7 +132,7 @@ class MultiScaleRunner:
         return all_results
     
     def save_results(self, results: dict, output_path: str):
-        """保存多规模测试结果"""
+        """Save multi-scale test results"""
         Path(output_path).parent.mkdir(parents=True, exist_ok=True)
         with open(output_path, 'w', encoding='utf-8') as f:
             json.dump(results, f, indent=2, ensure_ascii=False)
@@ -140,12 +140,12 @@ class MultiScaleRunner:
 
 
 def print_summary(results: dict):
-    """打印多规模测试摘要"""
+    """Print multi-scale benchmark summary"""
     print("\n" + "="*80)
     print("MULTI-SCALE BENCHMARK SUMMARY")
     print("="*80)
     
-    # 表头
+    # Table header
     print(f"\n{'Scale':<10} {'Vectors':>12} {'Sample':>10} {'Setup(s)':>12} {'Retrieve(ms)':>14} {'Update(s)':>12}")
     print("-"*80)
     
@@ -153,16 +153,16 @@ def print_summary(results: dict):
         num_vectors = scale_data['num_vectors']
         sample_size = scale_data['sample_size']
         
-        # 计算总时间
+        # Compute total times
         setup_time = sum(r['total_time'] for r in scale_data['setup'])
         
-        # 获取检索延迟（取search操作的平均值）
+        # Get retrieval latency (average over search operations)
         retrieve_times = [r['avg_time_per_item'] * 1000 
                          for r in scale_data['retrieve'] 
                          if 'search' in r['operation']]
         avg_retrieve = sum(retrieve_times) / len(retrieve_times) if retrieve_times else 0
         
-        # 计算更新总时间
+        # Compute total update time
         update_time = sum(r['total_time'] for r in scale_data['update'])
         
         print(f"{scale_name:<10} {num_vectors:>12,} {sample_size:>10,} {setup_time:>12.4f} {avg_retrieve:>14.4f} {update_time:>12.4f}")
@@ -185,7 +185,7 @@ def main():
     print("PP-RAG HE Benchmark - Multi-Scale Testing")
     print("="*70)
     
-    # 确定要测试的规模
+    # Determine which scales to test
     config = load_config("./config/config.yaml")
     if "all" in args.scales:
         target_scales = [s['name'] for s in config['dataset']['scales']]
@@ -194,17 +194,17 @@ def main():
     
     print(f"\nTarget scales: {', '.join(target_scales)}")
     
-    # 运行测试
+    # Run the tests
     runner = MultiScaleRunner("./config/config.yaml")
     results = runner.run_all_scales(target_scales)
     
-    # 保存结果
+    # Save results
     runner.save_results(results, args.output)
     
-    # 打印摘要
+    # Print summary
     print_summary(results)
     
-    # 可视化
+    # Visualization
     if args.visualize:
         print("\nGenerating scale comparison figures...")
         generate_scale_comparison_figures(args.output, "./results/figures")

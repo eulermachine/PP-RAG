@@ -1,6 +1,6 @@
 """
-结果可视化模块
-生成性能对比图表
+Visualization utilities for benchmark results.
+Generate performance comparison charts and component breakdowns.
 """
 import json
 import numpy as np
@@ -9,21 +9,21 @@ from pathlib import Path
 from typing import Dict, List, Any
 
 
-# 设置中文字体支持
+# Configure fonts (includes fallback for Chinese if available)
 plt.rcParams['font.sans-serif'] = ['SimHei', 'DejaVu Sans']
 plt.rcParams['axes.unicode_minus'] = False
 
 
 def load_results(path: str) -> dict:
-    """加载测试结果JSON"""
+    """Load benchmark results JSON."""
     with open(path, 'r', encoding='utf-8') as f:
         return json.load(f)
 
 
 def plot_setup_breakdown(results: dict, output_dir: str = "./results/figures"):
     """
-    生成Setup阶段分解图
-    展示加密上传、安全K-Means、安全HNSW构建的耗时占比
+    Generate a breakdown chart for the Setup phase.
+    Shows time shares for encryption upload, secure K-Means, and secure HNSW build.
     """
     setup_data = results.get('setup', [])
     if not setup_data:
@@ -38,19 +38,19 @@ def plot_setup_breakdown(results: dict, output_dir: str = "./results/figures"):
     
     fig, axes = plt.subplots(1, 2, figsize=(14, 6))
     
-    # 柱状图
+    # Bar chart
     colors = ['#3498db', '#e74c3c', '#2ecc71']
     bars = axes[0].bar(components, times, color=colors[:len(components)])
     axes[0].set_ylabel('Time (seconds)', fontsize=12)
     axes[0].set_title('Setup Phase - Component Breakdown', fontsize=14, fontweight='bold')
     axes[0].tick_params(axis='x', rotation=0)
     
-    # 添加数值标签
+    # Add numeric labels
     for bar, t in zip(bars, times):
         axes[0].text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.01,
                      f'{t:.3f}s', ha='center', va='bottom', fontsize=10)
     
-    # 饼图
+    # Pie chart
     axes[1].pie(times, labels=components, autopct='%1.1f%%', colors=colors[:len(components)],
                 startangle=90, explode=[0.02]*len(times))
     axes[1].set_title('Setup Phase - Time Distribution', fontsize=14, fontweight='bold')
@@ -65,15 +65,15 @@ def plot_setup_breakdown(results: dict, output_dir: str = "./results/figures"):
 
 def plot_retrieval_latency(results: dict, output_dir: str = "./results/figures"):
     """
-    生成Retrieve延迟分析图
-    展示不同top_k下的检索延迟
+    Generate retrieval latency analysis plot.
+    Shows latency for different top-K values.
     """
     retrieve_data = results.get('retrieve', [])
     if not retrieve_data:
         print("[Visualizer] No retrieve data found")
         return
     
-    # 分离搜索数据
+    # Filter search results
     search_results = [r for r in retrieve_data if 'search_top' in r['operation']]
     if not search_results:
         print("[Visualizer] No search results found")
@@ -84,7 +84,7 @@ def plot_retrieval_latency(results: dict, output_dir: str = "./results/figures")
     for r in search_results:
         k = int(r['operation'].replace('search_top', ''))
         top_k_values.append(k)
-        avg_times.append(r['avg_time_per_item'] * 1000)  # 转换为毫秒
+        avg_times.append(r['avg_time_per_item'] * 1000)  # convert to milliseconds
     
     fig, ax = plt.subplots(figsize=(10, 6))
     
@@ -99,7 +99,7 @@ def plot_retrieval_latency(results: dict, output_dir: str = "./results/figures")
     ax.grid(True, alpha=0.3)
     ax.legend(loc='upper left')
     
-    # 添加数据点标签
+    # Add data point labels
     for k, t in zip(top_k_values, avg_times):
         ax.annotate(f'{t:.2f}ms', (k, t), textcoords="offset points", 
                     xytext=(0, 10), ha='center', fontsize=9)
@@ -113,15 +113,15 @@ def plot_retrieval_latency(results: dict, output_dir: str = "./results/figures")
 
 def plot_update_throughput(results: dict, output_dir: str = "./results/figures"):
     """
-    生成Update吞吐量图
-    展示不同批次大小下的插入/删除性能
+    Generate update throughput plot.
+    Shows insert/delete performance for different batch sizes.
     """
     update_data = results.get('update', [])
     if not update_data:
         print("[Visualizer] No update data found")
         return
     
-    # 分离插入和删除数据
+    # Separate insert and delete records
     insert_data = [r for r in update_data if 'insert' in r['operation']]
     delete_data = [r for r in update_data if 'delete' in r['operation']]
     
@@ -149,7 +149,7 @@ def plot_update_throughput(results: dict, output_dir: str = "./results/figures")
     ax.legend()
     ax.grid(True, alpha=0.3, axis='y')
     
-    # 添加数值标签
+    # Add numeric labels
     for bar in bars1:
         height = bar.get_height()
         ax.annotate(f'{height:.2f}',
@@ -172,12 +172,12 @@ def plot_update_throughput(results: dict, output_dir: str = "./results/figures")
 
 def plot_component_details(results: dict, output_dir: str = "./results/figures"):
     """
-    生成组件详细耗时分解图
-    展示K-Means和HNSW内部各阶段的耗时
+    Generate detailed component breakdowns.
+    Shows internal timing for K-Means and HNSW stages.
     """
     setup_data = results.get('setup', [])
     
-    # 找到K-Means详细数据
+    # Locate K-Means and HNSW detail entries
     kmeans_result = next((r for r in setup_data if r['component'] == 'secure_kmeans'), None)
     hnsw_result = next((r for r in setup_data if r['component'] == 'secure_hnsw'), None)
     
@@ -187,7 +187,7 @@ def plot_component_details(results: dict, output_dir: str = "./results/figures")
     
     fig, axes = plt.subplots(1, 2, figsize=(14, 6))
     
-    # K-Means详细分解
+    # K-Means internal breakdown
     km_details = kmeans_result['details']
     km_labels = list(km_details.keys())
     km_values = list(km_details.values())
@@ -199,7 +199,7 @@ def plot_component_details(results: dict, output_dir: str = "./results/figures")
     for i, v in enumerate(km_values):
         axes[0].text(v + 0.001, i, f'{v:.4f}s', va='center', fontsize=10)
     
-    # HNSW详细分解
+    # HNSW internal breakdown
     if hnsw_result and hnsw_result.get('details'):
         hnsw_details = hnsw_result['details']
         hnsw_labels = list(hnsw_details.keys())
@@ -226,7 +226,7 @@ def generate_all_figures(
     results_path: str = "./results/timings.json",
     output_dir: str = "./results/figures"
 ):
-    """生成所有可视化图表"""
+    """Generate all visualization figures from a timings JSON file."""
     print("\n" + "="*60)
     print("Generating Visualization Figures")
     print("="*60)
@@ -243,9 +243,7 @@ def generate_all_figures(
 
 
 def plot_scale_setup_comparison(results: dict, output_dir: str = "./results/figures"):
-    """
-    生成多规模Setup阶段对比图
-    """
+    """Generate multi-scale Setup phase comparison plots."""
     scales_data = results.get('scales', {})
     if not scales_data:
         print("[Visualizer] No multi-scale data found")
@@ -265,7 +263,7 @@ def plot_scale_setup_comparison(results: dict, output_dir: str = "./results/figu
         total_time = sum(r['total_time'] for r in setup_data)
         setup_times.append(total_time)
         
-        # 分解各组件
+        # Break down per-component times
         for r in setup_data:
             if 'encryption' in r['component'] or 'encryption' in r['operation']:
                 component_breakdown['encryption'].append(r['total_time'])
@@ -279,7 +277,7 @@ def plot_scale_setup_comparison(results: dict, output_dir: str = "./results/figu
     
     fig, axes = plt.subplots(1, 2, figsize=(14, 6))
     
-    # 总Setup时间对比（对数刻度）
+    # Total Setup time comparison (log scale)
     x = np.arange(len(scale_names))
     bars = axes[0].bar(x, setup_times, color=['#3498db', '#e74c3c', '#2ecc71'][:len(scale_names)])
     axes[0].set_xticks(x)
@@ -293,7 +291,7 @@ def plot_scale_setup_comparison(results: dict, output_dir: str = "./results/figu
         axes[0].text(bar.get_x() + bar.get_width()/2, bar.get_height() * 1.1,
                      f'{t:.2f}s', ha='center', va='bottom', fontsize=10)
     
-    # 堆叠柱状图显示组件分解
+    # Stacked bar chart showing component breakdown
     width = 0.5
     bottom = np.zeros(len(scale_names))
     colors = {'encryption': '#3498db', 'kmeans': '#e74c3c', 'hnsw': '#2ecc71'}
@@ -321,9 +319,7 @@ def plot_scale_setup_comparison(results: dict, output_dir: str = "./results/figu
 
 
 def plot_scale_retrieval_comparison(results: dict, output_dir: str = "./results/figures"):
-    """
-    生成多规模Retrieve延迟对比图
-    """
+    """Generate retrieval-latency comparison across multiple data scales."""
     scales_data = results.get('scales', {})
     if not scales_data:
         return
@@ -368,9 +364,7 @@ def plot_scale_retrieval_comparison(results: dict, output_dir: str = "./results/
 
 
 def plot_scale_update_comparison(results: dict, output_dir: str = "./results/figures"):
-    """
-    生成多规模Update吞吐量对比图
-    """
+    """Generate update throughput comparison across multiple data scales."""
     scales_data = results.get('scales', {})
     if not scales_data:
         return
@@ -387,7 +381,7 @@ def plot_scale_update_comparison(results: dict, output_dir: str = "./results/fig
         scale_data = scales_data[scale_name]
         update_data = scale_data.get('update', [])
         
-        # 计算平均吞吐量
+        # Compute average throughput
         insert_data = [r for r in update_data if 'insert' in r['operation']]
         delete_data = [r for r in update_data if 'delete' in r['operation']]
         
@@ -427,9 +421,7 @@ def plot_scale_update_comparison(results: dict, output_dir: str = "./results/fig
 
 
 def plot_scalability_analysis(results: dict, output_dir: str = "./results/figures"):
-    """
-    生成可扩展性分析图（对数-对数刻度）
-    """
+    """Generate scalability analysis plots (log-log and semilog axes)."""
     scales_data = results.get('scales', {})
     if not scales_data:
         return
@@ -450,39 +442,39 @@ def plot_scalability_analysis(results: dict, output_dir: str = "./results/figure
         
         num_vectors_list.append(scale_vectors[scale_name])
         
-        # Setup时间
+        # Setup time
         setup_time = sum(r['total_time'] for r in scale_data.get('setup', []))
         setup_times.append(setup_time)
         
-        # Retrieve平均时间
+        # Average retrieve time
         search_results = [r for r in scale_data.get('retrieve', []) if 'search' in r['operation']]
         if search_results:
             retrieve_times.append(np.mean([r['avg_time_per_item'] * 1000 for r in search_results]))
         else:
             retrieve_times.append(0)
         
-        # Update总时间
+        # Total update time
         update_time = sum(r['total_time'] for r in scale_data.get('update', []))
         update_times.append(update_time)
     
     if not num_vectors_list:
         return
     
-    # Setup可扩展性
+    # Setup scalability
     axes[0].loglog(num_vectors_list, setup_times, 'o-', linewidth=2, markersize=10, color='#3498db')
     axes[0].set_xlabel('Number of Vectors', fontsize=11)
     axes[0].set_ylabel('Setup Time (s)', fontsize=11)
     axes[0].set_title('Setup Scalability', fontsize=12, fontweight='bold')
     axes[0].grid(True, alpha=0.3)
     
-    # Retrieve可扩展性
+    # Retrieval scalability
     axes[1].semilogx(num_vectors_list, retrieve_times, 's-', linewidth=2, markersize=10, color='#e74c3c')
     axes[1].set_xlabel('Number of Vectors', fontsize=11)
     axes[1].set_ylabel('Avg Query Latency (ms)', fontsize=11)
     axes[1].set_title('Retrieval Scalability', fontsize=12, fontweight='bold')
     axes[1].grid(True, alpha=0.3)
     
-    # Update可扩展性
+    # Update scalability
     axes[2].loglog(num_vectors_list, update_times, '^-', linewidth=2, markersize=10, color='#2ecc71')
     axes[2].set_xlabel('Number of Vectors', fontsize=11)
     axes[2].set_ylabel('Update Time (s)', fontsize=11)
@@ -500,7 +492,7 @@ def generate_scale_comparison_figures(
     results_path: str = "./results/multiscale_timings.json",
     output_dir: str = "./results/figures"
 ):
-    """生成多规模对比可视化图表"""
+    """Generate multi-scale comparison visualizations from a JSON file."""
     print("\n" + "="*60)
     print("Generating Multi-Scale Comparison Figures")
     print("="*60)

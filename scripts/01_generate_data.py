@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
 01_generate_data.py
-生成多级规模向量数据集：十万、百万、千万条768维模拟向量数据
+Generate multi-scale vector datasets: 100k, 1m, 10m synthetic 768-d vectors
 """
 import sys
 import argparse
 from pathlib import Path
 
-# 添加项目路径
+# Add project path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.python.data_generator import (
@@ -16,12 +16,12 @@ from src.python.data_generator import (
 
 
 def generate_single_scale(num_vectors: int, dimension: int, output_path: str, scale_name: str):
-    """生成单个规模的数据集"""
+    """Generate dataset for a single scale"""
     print(f"\n{'='*60}")
     print(f"Generating {scale_name} dataset: {num_vectors:,} vectors")
     print(f"{'='*60}")
     
-    # 检查是否已存在
+    # Check if dataset already exists
     if Path(output_path).exists():
         print(f"[SKIP] Dataset already exists at {output_path}")
         print("  Use --force to regenerate")
@@ -30,13 +30,13 @@ def generate_single_scale(num_vectors: int, dimension: int, output_path: str, sc
     print(f"Dimension: {dimension}")
     print(f"Output: {output_path}")
     
-    # 生成数据
+    # Generate data
     vectors = generate_synthetic_embeddings(num_vectors, dimension)
     
     print(f"Generated shape: {vectors.shape}")
     print(f"Memory size: {vectors.nbytes / 1024 / 1024:.2f} MB")
     
-    # 保存
+    # Save
     save_dataset(vectors, output_path)
     
     return True

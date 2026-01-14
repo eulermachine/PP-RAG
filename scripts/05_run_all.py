@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 05_run_all.py
-运行完整基准测试并生成可视化图表
+Run the full benchmark suite and generate visualizations
 """
 import sys
 from pathlib import Path
@@ -17,10 +17,10 @@ def main():
     print("PP-RAG HE Component Benchmark - Full Suite")
     print("="*70)
     
-    # 运行完整测试
+    # Run the full benchmark
     results = run_benchmark("./config/config.yaml")
-    
-    # 生成可视化
+
+    # Generate visualizations
     generate_all_figures("./results/timings.json", "./results/figures")
     
     print("\n" + "="*70)

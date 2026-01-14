@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 04_bench_update.py
-测试Update阶段：安全插入、安全删除
+Benchmark the Update phase: secure inserts and deletes
 """
 import sys
 from pathlib import Path
@@ -19,14 +19,14 @@ def main():
     runner = BenchmarkRunner("./config/config.yaml")
     vectors = runner.load_data()
     
-    # 需要先构建索引
+    # Prerequisite: build the index first
     print("\n[Prerequisite] Building index first...")
     runner.benchmark_setup(vectors)
-    
-    # 运行更新测试
+
+    # Run update tests
     results = runner.benchmark_update(vectors)
     
-    # 打印摘要
+    # Print summary
     print("\n" + "="*60)
     print("Update Phase Summary")
     print("="*60)

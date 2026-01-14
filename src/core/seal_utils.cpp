@@ -1,8 +1,8 @@
 /**
  * seal_utils.cpp
- * CKKS基础操作封装 - 完整实现
- * 
- * 提供加密、解密、同态运算接口
+ * CKKS utility wrappers - full implementation
+ *
+ * Provides encryption, decryption and homomorphic operation interfaces
  * https://github.com/microsoft/SEAL
  */
 
@@ -21,7 +21,7 @@ using namespace seal;
 namespace pprag {
 
 /**
- * CKKS加密上下文管理器
+ * CKKS encryption context manager
  */
 class CKKSContext {
 public:
@@ -50,7 +50,7 @@ public:
         #endif
     }
     
-    // ==================== 基础信息 ====================
+    // ==================== Basic info ====================
     
     size_t slot_count() const {
         #ifdef USE_SEAL
@@ -63,11 +63,11 @@ public:
     double scale() const { return scale_; }
     size_t poly_degree() const { return poly_degree_; }
     
-    // ==================== 加密/解密 ====================
+    // ==================== Encryption / Decryption ====================
     
     #ifdef USE_SEAL
     /**
-     * 加密单个向量
+     * Encrypt a single vector
      */
     Ciphertext encrypt_vector(const std::vector<double>& vec) {
         Plaintext plain;
@@ -79,7 +79,7 @@ public:
     }
     
     /**
-     * 批量加密多个向量（每个向量打包到一个密文）
+     * Batch encrypt multiple vectors (each vector packed into one ciphertext)
      */
     std::vector<Ciphertext> encrypt_batch(const std::vector<std::vector<double>>& vectors) {
         std::vector<Ciphertext> result;
@@ -92,7 +92,7 @@ public:
     }
     
     /**
-     * 解密到向量
+     * Decrypt to a vector
      */
     std::vector<double> decrypt_vector(const Ciphertext& ct, size_t length = 0) {
         Plaintext plain;
@@ -107,10 +107,10 @@ public:
         return result;
     }
     
-    // ==================== 同态运算 ====================
+    // ==================== Homomorphic operations ====================
     
     /**
-     * 同态加法
+     * Homomorphic addition
      */
     Ciphertext he_add(const Ciphertext& ct1, const Ciphertext& ct2) {
         Ciphertext result;
@@ -123,7 +123,7 @@ public:
     }
     
     /**
-     * 同态乘法（需要relinearize和rescale）
+     * Homomorphic multiplication (requires relinearize and rescale)
      */
     Ciphertext he_multiply(const Ciphertext& ct1, const Ciphertext& ct2) {
         Ciphertext result;
@@ -134,7 +134,7 @@ public:
     }
     
     /**
-     * 明文常数乘法
+     * Multiply by plaintext scalar
      */
     Ciphertext he_multiply_plain(const Ciphertext& ct, double scalar) {
         Plaintext plain;
@@ -147,7 +147,7 @@ public:
     }
     
     /**
-     * 同态减法
+     * Homomorphic subtraction
      */
     Ciphertext he_subtract(const Ciphertext& ct1, const Ciphertext& ct2) {
         Ciphertext result;
@@ -156,7 +156,7 @@ public:
     }
     
     /**
-     * 同态平方
+     * Homomorphic squaring
      */
     Ciphertext he_square(const Ciphertext& ct) {
         Ciphertext result;
@@ -167,7 +167,7 @@ public:
     }
     
     /**
-     * 向量旋转
+     * Vector rotation
      */
     Ciphertext he_rotate(const Ciphertext& ct, int steps) {
         Ciphertext result;
@@ -175,21 +175,21 @@ public:
         return result;
     }
     
-    // ==================== 复合运算 ====================
+    // ==================== Composite operations ====================
     
     /**
-     * 同态内积计算
-     * 使用 multiply + rotate-and-sum 模式
+     * Homomorphic inner product computation
+     * Uses multiply + rotate-and-sum pattern
      */
     Ciphertext he_inner_product(const Ciphertext& ct1, const Ciphertext& ct2) {
-        // 元素级乘法
+        // Element-wise multiplication
         Ciphertext result = he_multiply(ct1, ct2);
         
         // Rotate and sum to get inner product
         size_t slots = slot_count();
         for (size_t i = 1; i < slots; i *= 2) {
             Ciphertext rotated = he_rotate(result, static_cast<int>(i));
-            // 对齐scale进行加法
+            // Align scales and add
             match_scale_and_add_inplace(result, rotated);
         }
         
@@ -197,7 +197,7 @@ public:
     }
     
     /**
-     * 计算L2距离平方: ||a - b||^2
+     * Compute squared L2 distance: ||a - b||^2
      */
     Ciphertext he_l2_distance_squared(const Ciphertext& ct1, const Ciphertext& ct2) {
         // diff = ct1 - ct2
@@ -215,15 +215,15 @@ public:
         return diff_sq;
     }
     
-    // ==================== 辅助函数 ====================
+    // ==================== Helper functions ====================
     
     /**
-     * 匹配scale后进行加法
+     * Match scales and add in-place
      */
     void match_scale_and_add_inplace(Ciphertext& ct1, Ciphertext& ct2) {
-        // 匹配parms_id
+        // Match parms_id
         if (ct1.parms_id() != ct2.parms_id()) {
-            // 找到更低的level
+            // Switch to the lower level
             auto ctx_data1 = context_->get_context_data(ct1.parms_id());
             auto ctx_data2 = context_->get_context_data(ct2.parms_id());
             
@@ -234,7 +234,7 @@ public:
             }
         }
         
-        // 匹配scale
+        // Match scales
         ct1.scale() = scale_;
         ct2.scale() = scale_;
         
@@ -242,13 +242,13 @@ public:
     }
     
     /**
-     * 获取密文噪声预算（用于调试）
+     * Get ciphertext noise budget (for debugging)
      */
     int noise_budget(const Ciphertext& ct) {
         return decryptor_->invariant_noise_budget(ct);
     }
     
-    // 公开访问器（供其他模块使用）
+    // Public accessors (for other modules)
     std::shared_ptr<SEALContext> context() { return context_; }
     std::shared_ptr<Evaluator> evaluator() { return evaluator_; }
     std::shared_ptr<CKKSEncoder> encoder() { return encoder_; }

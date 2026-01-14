@@ -1,9 +1,9 @@
 /**
  * secure_kmeans.cpp
- * 安全K-Means聚类实现
- * 
- * 使用PolySoftmin进行软分配
- * 使用HomoNorm进行质心归一化
+ * Secure K-Means clustering implementation
+ *
+ * Uses PolySoftmin for soft assignments
+ * Uses HomoNorm for centroid normalization
  */
 
 #pragma once
@@ -17,7 +17,7 @@
 namespace pprag {
 
 /**
- * 安全K-Means聚类器
+ * Secure K-Means clustering class
  */
 class SecureKMeans {
 public:
@@ -27,7 +27,7 @@ public:
           softmin_(softmin_degree, temperature), homo_norm_() {}
     
     /**
-     * 明文版本的K-Means（用于验证和基准测试）
+     * Plaintext version of K-Means (for validation and benchmarking)
      */
     struct ClusterResult {
         std::vector<std::vector<double>> centroids;
@@ -49,7 +49,7 @@ public:
         result.update_time = 0;
         result.normalize_time = 0;
         
-        // 随机初始化质心
+        // Randomly initialize centroids
         result.centroids.resize(n_clusters_);
         std::random_device rd;
         std::mt19937 gen(rd());
@@ -63,9 +63,9 @@ public:
         
         result.labels.resize(n);
         
-        // 迭代
+        // Iterations
         for (int iter = 0; iter < max_iter_; ++iter) {
-            // 软分配
+            // Soft assignment
             std::vector<std::vector<double>> weights(n);
             
             #pragma omp parallel for
@@ -77,7 +77,7 @@ public:
                 weights[i] = softmin_.compute_plaintext(distances);
             }
             
-            // 更新质心
+            // Update centroids
             std::vector<std::vector<double>> new_centroids(n_clusters_, 
                                                            std::vector<double>(dim, 0.0));
             std::vector<double> weight_sums(n_clusters_, 0.0);
@@ -97,12 +97,12 @@ public:
                         new_centroids[c][d] /= weight_sums[c];
                     }
                 }
-                // 归一化
+                // Normalize
                 result.centroids[c] = homo_norm_.normalize_plaintext(new_centroids[c]);
             }
         }
         
-        // 硬分配得到最终标签
+        // Hard assignment to obtain final labels
         #pragma omp parallel for
         for (int i = 0; i < n; ++i) {
             double min_dist = std::numeric_limits<double>::max();
