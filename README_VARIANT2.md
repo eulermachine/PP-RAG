@@ -1,15 +1,15 @@
-# 🚀 PP-RAG 变种2（Variant 2）完整实现
+# PP-RAG （Variant 2）
 
-## 📌 一句话总结
 
-在保持原项目完整性的前提下，创建变种2：采用**云端全同态计算距离 + 客户端部分解密决策**的混合策略，并显式跟踪通信成本。所有新文件均采用"原名+2"命名规则。
+
+
 
 ---
 
 ````markdown
-# 🚀 PP-RAG Variant 2 — Full Implementation
+#  PP-RAG Variant 2 — Full Implementation
 
-## 📌 One-line Summary
+##  One-line Summary
 
 Variant 2 implements a hybrid strategy that combines cloud-side fully-homomorphic distance computation with client-side partial decryption for decision making, and explicitly tracks communication costs. New files use the "+2" naming convention.
 
