@@ -1,17 +1,6 @@
-# PP-RAG 变种2：混合型同态加密方案
+# PP-RAG variant2
 
-## 概述
-
-**变种2**采用**混合策略**实现安全索引，突出了云端计算与客户端决策的分工：
-
-```
-原型（版本1）: 完全同态 → 云端完成所有距离计算与比较
-变种2：混合型  → 云端计算距离，客户端部分解密后决策导航
-```
-
-## 核心设计
-
-### 密文比较策略 (Ciphertext Comparison)
+ (Ciphertext Comparison)
 
 ````markdown
 # PP-RAG Variant 2 — Hybrid Homomorphic Scheme
