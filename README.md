@@ -60,7 +60,14 @@ You can then use `PYTHONPATH=build` or install the produced `.so/.pyd` into your
 - Performance tips: the project uses OpenMP, LTO, and tuned HNSW defaults — use a Release build for best performance.
 
 ### Generate & run example
+We provide a configurable synthetic vector generator used **only** for
+system scalability and latency evaluation.
 
+This dataset:
+
+• does NOT affect accuracy experiments  
+• is used to simulate large-scale encrypted vector databases  
+• allows reviewers to reproduce performance scaling results
 Generate the 100k dataset and run the benchmark (bootstrap will auto-generate missing data):
 
 ```bash
